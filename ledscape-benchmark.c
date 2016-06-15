@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
+#include <sys/time.h>
 
 #define NUM_STRIPS 48
 #define LEDS_PER_STRIP 512
@@ -69,9 +70,22 @@ void test_transpose() {
   printf("transpose test ok.\n");
 }
 
-double time_diff(struct timespec* start, struct timespec* end) {
-  double start_d = start->tv_sec + start->tv_nsec * 1e-9;
-  double end_d = end->tv_sec + end->tv_nsec * 1e-9;
+struct timer {
+  struct timeval start;
+  struct timeval end;
+};
+
+void timer_start(struct timer* timer) {
+  gettimeofday(&timer->start, NULL);
+}
+
+void timer_stop(struct timer* timer) {
+  gettimeofday(&timer->end, NULL);
+}
+
+double timer_diff(struct timer* t) {
+  double start_d = t->start.tv_sec + t->start.tv_usec * 1e-6;
+  double end_d = t->end.tv_sec + t->end.tv_usec * 1e-6;
   return end_d - start_d;
 }
 
@@ -88,27 +102,25 @@ void benchmark_transpose() {
 
   int iterations = 10000;
 
-  struct timespec simple_start;
-  struct timespec simple_end;
-  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &simple_start);
+  struct timer simple_timer;
+  timer_start(&simple_timer);
   for (int iteration = 0; iteration < iterations; iteration++) {
     transpose_simple(pixels_buffer, pru_buffer);
   }
-  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &simple_end);
+  timer_stop(&simple_timer);
 
   printf("Speed of simple transpose %lf ms per iteration\n",
-         time_diff(&simple_start, &simple_end) / iterations * 1000);
+         timer_diff(&simple_timer) / iterations * 1000);
 
-  struct timespec tiled_start;
-  struct timespec tiled_end;
-  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tiled_start);
+  struct timer tiled_timer;
+  timer_start(&tiled_timer);
   for (int iteration = 0; iteration < iterations; iteration++) {
     transpose_tiles(pixels_buffer, pru_buffer);
   }
-  clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tiled_end);
+  timer_stop(&tiled_timer);
 
   printf("Speed of tiled transpose %lf ms per iteration\n",
-         time_diff(&tiled_start, &tiled_end) / iterations * 1000);
+         timer_diff(&tiled_timer) / iterations * 1000);
 
 }
 
