@@ -84,7 +84,6 @@ void ledscape_strip_set_color(ledscape_t *leds, int strip_index,
 }
 
 void ledscape_copy_frame_to_pru(ledscape_t *leds) {
-  fprintf(stderr, "copying frame to pru\n");
   int32_t *ddr = (int32_t *)leds->pru0->ddr;
   for (size_t strip_index = 0; strip_index < LEDSCAPE_NUM_STRIPS;
        strip_index++) {
@@ -99,8 +98,7 @@ void ledscape_copy_frame_to_pru(ledscape_t *leds) {
 
 /** Initiate the transfer of a frame to the LED strips */
 void ledscape_draw(ledscape_t *const leds) {
-  fprintf(stderr, "---SSS--- ledscape_draw\n");
-  //ledscape_wait(leds);
+  ledscape_wait(leds);
   // Now pru is not processing buffers, we can copy them over.
   ledscape_copy_frame_to_pru(leds);
 
@@ -118,8 +116,6 @@ void ledscape_draw(ledscape_t *const leds) {
   // Send the start command
   leds->ws281x_0->command = 1;
   leds->ws281x_1->command = 1;
- 
-  ledscape_wait(leds);
 }
 
 /** Wait for the current frame to finish transfering to the strips.
@@ -129,10 +125,9 @@ void ledscape_wait(ledscape_t *const leds) {
   while (1) {
     pru_wait_interrupt();
 
-                 fprintf(stderr, "pru0: (%d,%d), pru1: (%d,%d)\n",
-                        leds->ws281x_0->command, leds->ws281x_0->response,
-                        leds->ws281x_1->command, leds->ws281x_1->response
-                 );
+    //fprintf(stderr, "pru0: (%d,%d), pru1: (%d,%d)\n",
+    //        leds->ws281x_0->command, leds->ws281x_0->response,
+    //        leds->ws281x_1->command, leds->ws281x_1->response);
 
     if (leds->ws281x_0->response && leds->ws281x_1->response)
       return;
