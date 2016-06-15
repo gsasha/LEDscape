@@ -1303,13 +1303,18 @@ void *tcp_server_thread(void *runtime_state_ptr) {
   mg_mgr_init(&mgr, NULL);
 
   char s_bind_addr[128];
-  sprintf(s_bind_addr, "[::]:%d", server_config->tcp_port);
+  sprintf(s_bind_addr, "tcp://:%d", server_config->tcp_port);
+
+  struct mg_bind_opts opts;
+  memset(&opts, 0, sizeof(opts));
+  const char *err = NULL;
+  opts.error_string = &err;
 
   // Initialize server and open listening port
   struct mg_connection *connection =
-      mg_bind(&mgr, s_bind_addr, MG_CB(event_handler, runtime_state_ptr));
+      mg_bind_opt(&mgr, s_bind_addr, MG_CB(event_handler, runtime_state_ptr), opts);
   if (connection == NULL) {
-    printf("[tcp] Failed to bind to port %s\n", s_bind_addr);
+    printf("[tcp] Failed to bind to port %s: %s\n", s_bind_addr, err);
     exit(-1);
   }
 

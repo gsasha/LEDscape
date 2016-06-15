@@ -22,7 +22,7 @@ void init_ledscape(runtime_state_t* runtime_state) {
 
   // Init LEDscape
   printf("[main] Starting LEDscape... leds_per_strip %d, pru0_program %s, "
-         "pru1_program %s",
+         "pru1_program %s\n",
          server_config->leds_per_strip, pru0_filename, pru1_filename);
   runtime_state->leds = ledscape_init_with_programs(
       server_config->leds_per_strip, pru0_filename, pru1_filename);
