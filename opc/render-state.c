@@ -1,8 +1,10 @@
+#define __USE_BSD
 #include "opc/render-state.h"
 
 #include <malloc.h>
 #include <stdbool.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "opc/color.h"
 

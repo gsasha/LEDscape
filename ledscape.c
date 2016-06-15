@@ -10,7 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 /** GPIO pins used by the LEDscape.
  *

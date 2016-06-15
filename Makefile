@@ -29,11 +29,13 @@ else
 export CROSS_COMPILE?=arm-linux-gnueabi-
 endif
 
+# TODO(gsasha): find out how to deal without -D_BSD_SOURCE
 CFLAGS += \
 	-std=c99 \
 	-W \
 	-Wall \
 	-D_DEFAULT_SOURCE \
+        -D_BSD_SOURCE \
 	-Wp,-MMD,$(dir $@).$(notdir $@).d \
 	-Wp,-MT,$@ \
 	-I. \

@@ -9,6 +9,7 @@
 #include <termios.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/types.h>
 
 ssize_t write_all(const int fd, const void *const buf_ptr, const size_t len) {
   const uint8_t *const buf = buf_ptr;
