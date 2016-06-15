@@ -514,6 +514,8 @@ inline uint32_t lutInterpolate(uint32_t value, uint32_t *lut) {
   return (lut[index] * invAlpha + lut[index + 1] * alpha) >> 8;
 }
 
+uint8_t buffer[1024 * 3];
+
 void *render_thread(void *runtime_state_ptr) {
   runtime_state_t *runtime_state = (runtime_state_t *)runtime_state_ptr;
   server_config_t *server_config = &runtime_state->server_config;
@@ -658,14 +660,13 @@ void *render_thread(void *runtime_state_ptr) {
     color_channel_order_t color_channel_order =
         server_config->color_channel_order;
 
-    uint8_t buffer[server_config->leds_per_strip * 3];
-    uint8_t* buffer_ptr = buffer;
 
     // Only allow dithering to take effect if it blinks faster than 60fps
     uint32_t maxDitherFrames = 16667 / frame_duration_avg_usec;
 
     for (uint32_t strip_index = 0; strip_index < used_strip_count;
          strip_index++) {
+       uint8_t* buffer_ptr = buffer;
       for (uint32_t led_index = 0; led_index < leds_per_strip;
            led_index++, data_index++) {
         buffer_pixel_t *pixel_in_prev =
@@ -743,11 +744,12 @@ void *render_thread(void *runtime_state_ptr) {
         uint8_t g = (uint8_t)min((ditheredG + 0x80) >> 8, 255);
         uint8_t b = (uint8_t)min((ditheredB + 0x80) >> 8, 255);
 
-        //ledscape_set_color(runtime_state->leds, color_channel_order,
-        //                   strip_index, led_index, r, g, b);
+        ledscape_set_color(runtime_state->leds, color_channel_order,
+                           strip_index, led_index, r, g, b);
         buffer_ptr[0] = r;
         buffer_ptr[1] = g;
         buffer_ptr[2] = b;
+        buffer_ptr += 3;
 
         // if (led_index == 0 && strip_index == 3) {
         //   printf("channel %d: %03d %03d %03d\n", strip_index, r, g, b);
@@ -772,8 +774,8 @@ void *render_thread(void *runtime_state_ptr) {
           pixel_in_overflow->b = (uint8_t)((int16_t)ditheredB - (b * 257));
         }
       }
-      ledscape_strip_set_color(runtime_state->leds, color_channel_order,
-                               strip_index, buffer,
+      ledscape_strip_set_color(runtime_state->leds, strip_index, color_channel_order,
+                               buffer,
                                server_config->leds_per_strip);
     }
 
