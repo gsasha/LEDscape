@@ -559,11 +559,9 @@ void *demo_thread(void *runtime_state_ptr) {
   uint8_t demo_enabled = true;
 
   buffer = malloc(render_state->leds_per_strip * sizeof(buffer_pixel_t));
-  fprintf(stderr, "---SSS--- Allocated buffer of size %d: %d\n", render_state->leds_per_strip, (int)buffer);
   memset(buffer, 0, buffer_size);
 
   for (uint16_t frame_index = 0; /*ever*/; frame_index += 3) {
-fprintf(stderr, "---SSS--- running demo thread frame\n");
     // Calculate time since last remote data
 /*
     pthread_mutex_lock(&render_state->mutex);
@@ -593,7 +591,6 @@ fprintf(stderr, "---SSS--- running demo thread frame\n");
     }
 */
     if (demo_enabled) {
-      fprintf(stderr, "---SSS--- Running demo frame mode %d\n",demo_mode);
 
       for (uint32_t strip = 0; strip < LEDSCAPE_NUM_STRIPS;
            strip++) {

@@ -89,7 +89,6 @@ void ledscape_set_rgba_data(ledscape_t *leds,
   if (num_leds > leds->num_leds) {
     num_leds = leds->num_leds;
   }
-  fprintf(stderr, "---SSS--- LEDSCAPE_SET_RGBA_DATA %d\n", num_leds);
   ledscape_pixel_t *pixel = leds->frame;
   // TODO(gsasha): unroll this, if rgb is not translated, it's just memcpy.
   for (size_t i = 0; i < num_leds; i++) {
@@ -104,34 +103,22 @@ void ledscape_set_rgba_data(ledscape_t *leds,
 void ledscape_copy_frame_to_pru(ledscape_t *leds) {
   int32_t *ddr = (int32_t *)leds->pru0->ddr;
   
-  fprintf(stderr, "---SSS--- ledscape_copy_frame_to_pru %x %x %x\n",
-    *(int*)leds->frame,
-    *(int*)leds->frame+100,
-    *(int*)leds->frame+200);
-
   for (size_t strip_index = 0; strip_index < LEDSCAPE_NUM_STRIPS;
        strip_index++) {
     int32_t *strip =
         (int32_t *)leds->frame + strip_index * leds->leds_per_strip;
-//  fprintf(stderr, "---SSS--- Ledscape copying strip to pru %d %x\n",
-//  strip_index, (int)*strip);
     for (size_t pixel = 0; pixel < leds->leds_per_strip; pixel++) {
-      int ddr_index = pixel*LEDSCAPE_NUM_STRIPS + strip_index;
       ddr[pixel * LEDSCAPE_NUM_STRIPS + strip_index] = strip[pixel];
-      if (pixel==10)fprintf(stderr, "---SSS--- COPYING %d<-%d:%d - %x\n", ddr_index,strip_index, pixel, strip[pixel]);
     }
   }
-  //fprintf(stderr, "---SSS--- Prefilling leds with junk\n");
   //for (int i=0; i<200 ;i++) { ddr[i]=0x0000cc;}
 }
 
 /** Initiate the transfer of a frame to the LED strips */
 void ledscape_draw(ledscape_t *const leds) {
-  fprintf(stderr, "---SSS--- ledscape_draw\n");
   ledscape_wait(leds);
   // Now pru is not processing buffers, we can copy them over.
   ledscape_copy_frame_to_pru(leds);
-  fprintf(stderr, "---SSS--- ledscape_done_copying\n");
 
   leds->ws281x_0->pixels_dma = leds->pru0->ddr_addr;
   leds->ws281x_1->pixels_dma = leds->pru0->ddr_addr;

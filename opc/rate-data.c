@@ -1,5 +1,7 @@
 #include "opc/rate-data.h"
 
+#include <stdio.h>
+
 void rate_data_init(struct rate_data *data, double window_size_seconds) {
   data->window_size_seconds = window_size_seconds;
   gettimeofday(&data->initial_time, NULL);
@@ -11,8 +13,8 @@ void rate_data_init(struct rate_data *data, double window_size_seconds) {
 }
 
 double seconds_since(struct timeval *a, struct timeval *b) {
-  double seconds_a = a->tv_sec + a->tv_usec * 1e6;
-  double seconds_b = b->tv_sec + b->tv_usec * 1e6;
+  double seconds_a = a->tv_sec + a->tv_usec * 1e-6;
+  double seconds_b = b->tv_sec + b->tv_usec * 1e-6;
   return seconds_b - seconds_a;
 }
 
@@ -21,6 +23,7 @@ bool rate_data_add_event(struct rate_data *data) {
   gettimeofday(&current_time, NULL);
 
   data->total_events++;
+  data->last_window_events++;
   double seconds_since_last_window =
       seconds_since(&data->last_window_time, &current_time);
   if (seconds_since_last_window >= data->window_size_seconds) {
@@ -32,6 +35,7 @@ bool rate_data_add_event(struct rate_data *data) {
 
     data->last_window_time = current_time;
     data->last_window_events = 0;
+    fprintf(stderr,"---SSS--- window since start=%lf, seconds_since_window=%lf intervals=%d\n", seconds_since_start, seconds_since_last_window, last_window_intervals);
     return true;
   }
   return false;
