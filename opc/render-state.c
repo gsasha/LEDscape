@@ -44,6 +44,7 @@ void init_ledscape(server_config_t *server_config,
 
 void init_render_state(render_state_t *render_state,
                        server_config_t *server_config) {
+  fprintf(stderr, "---SSS--- Init render_state\n");
   render_state->num_strips_used = server_config->used_strip_count;
   render_state->leds_per_strip = server_config->leds_per_strip;
   render_state->num_leds =
@@ -64,6 +65,8 @@ void init_render_state(render_state_t *render_state,
   render_state->backing_data = malloc(led_count * sizeof(buffer_pixel_t));
 
   rate_data_init(&render_state->rate_data, 5);
+  fprintf(stderr, "---SSS--- Init render state done frame_data %d backing_data %d\n",
+(int) render_state->frame_data, (int)render_state->backing_data);
 }
 
 void timeval_add(struct timeval *dst, struct timeval *added) {
@@ -93,9 +96,11 @@ int timeval_microseconds_until(struct timeval *a, struct timeval *b) {
 
 void set_strip_data(render_state_t *render_state, int strip,
                     buffer_pixel_t *strip_data, int strip_num_leds) {
+render_state = render_state; strip=strip; strip_data = strip_data, strip_num_leds = strip_num_leds;
+fprintf(stderr, "---SSS--- running set_strip_data strip=%d data=%x\n", strip, *(int*)strip_data);
   pthread_mutex_lock(&render_state->frame_data_mutex);
   buffer_pixel_t *frame_strip_data =
-      render_state->frame_data + strip * render_state->leds_per_strip;
+    render_state->frame_data + strip * render_state->leds_per_strip;
   memcpy(frame_strip_data, strip_data,
          strip_num_leds * sizeof(buffer_pixel_t));
   pthread_mutex_unlock(&render_state->frame_data_mutex);
@@ -106,6 +111,10 @@ void render_backing_data(render_state_t* render_state) {
   uint8_t *lut_lookup_r = render_state->lut_lookup_red;
   uint8_t *lut_lookup_g = render_state->lut_lookup_green;
   uint8_t *lut_lookup_b = render_state->lut_lookup_blue;
+fprintf(stderr, "---SSS--- before lut data=%x %x %x\n", 
+ *(int*)render_state->backing_data,
+ *(int*)render_state->backing_data+100,
+ *(int*)render_state->backing_data+200);
   for (int i = 0; i < render_state->num_leds; i++) {
     buffer_pixel_t *pixel = &render_state->backing_data[i];
     pixel->r = lut_lookup_r[pixel->r];
@@ -113,9 +122,18 @@ void render_backing_data(render_state_t* render_state) {
     pixel->b = lut_lookup_b[pixel->b];
   }
   // Send data to ledscape.
+fprintf(stderr, "---SSS--- after lut data=%x %x %x\n", 
+ *(int*)render_state->backing_data,
+ *(int*)render_state->backing_data+100,
+ *(int*)render_state->backing_data+200);
   ledscape_set_rgba_data(render_state->leds, render_state->color_channel_order,
                          (uint8_t *)render_state->backing_data,
                          render_state->num_leds);
+  ledscape_draw(render_state->leds);
+//  fprintf(stderr, "Sending rgba data to ledscape %d:%d:%d\n",
+// render_state->backing_data[0].r,
+// render_state->backing_data[0].g,
+// render_state->backing_data[0].b);
 }
 
 void render_thread_run(render_state_t *render_state) {
@@ -125,7 +143,9 @@ void render_thread_run(render_state_t *render_state) {
   step_frame_tv.tv_sec = 0;
   step_frame_tv.tv_usec = 1000000 / 60;
 
-  for (;;) {
+  fprintf(stderr, "Starting render thread\n");
+  for (int frame=0;;frame++) {
+    fprintf(stderr, "Frame %d\n", frame);
     timeval_add(&frame_tv, &step_frame_tv);
 
     struct timeval current_time_tv;

@@ -487,13 +487,15 @@ int main(int argc, char **argv) {
 
   bzero(&g_threads, sizeof(g_threads));
   pthread_create(&g_threads.render_thread.handle, NULL, render_thread,
-                 &g_runtime_state);
+                 &g_runtime_state.render_state);
+/*
   pthread_create(&g_threads.udp_server_thread.handle, NULL, udp_server_thread,
                  &g_runtime_state);
   pthread_create(&g_threads.tcp_server_thread.handle, NULL, tcp_server_thread,
                  &g_runtime_state);
   pthread_create(&g_threads.e131_server_thread.handle, NULL, e131_server_thread,
                  &g_runtime_state);
+*/
 
   if (server_config->demo_mode != DEMO_MODE_NONE) {
     printf("[main] Demo Mode Enabled\n");
@@ -503,6 +505,9 @@ int main(int argc, char **argv) {
     printf("[main] Demo Mode Disabled\n");
   }
 
+  fprintf(stderr, "Waiting for demo thread to exit\n");
+  pthread_join(g_threads.demo_thread.handle, NULL);
+ 
   pthread_exit(NULL);
 }
 
@@ -554,9 +559,11 @@ void *demo_thread(void *runtime_state_ptr) {
   uint8_t demo_enabled = true;
 
   buffer = malloc(render_state->leds_per_strip * sizeof(buffer_pixel_t));
+  fprintf(stderr, "---SSS--- Allocated buffer of size %d: %d\n", render_state->leds_per_strip, (int)buffer);
   memset(buffer, 0, buffer_size);
 
   for (uint16_t frame_index = 0; /*ever*/; frame_index += 3) {
+fprintf(stderr, "---SSS--- running demo thread frame\n");
     // Calculate time since last remote data
 /*
     pthread_mutex_lock(&render_state->mutex);
@@ -586,10 +593,11 @@ void *demo_thread(void *runtime_state_ptr) {
     }
 */
     if (demo_enabled) {
+      fprintf(stderr, "---SSS--- Running demo frame mode %d\n",demo_mode);
 
-      for (uint32_t strip = 0, pixel_index = 0; strip < LEDSCAPE_NUM_STRIPS;
+      for (uint32_t strip = 0; strip < LEDSCAPE_NUM_STRIPS;
            strip++) {
-        for (uint16_t p = 0; p < render_state->leds_per_strip;
+        for (uint16_t p = 0, pixel_index = 0; p < render_state->leds_per_strip;
              p++, pixel_index++) {
           switch (demo_mode) {
           case DEMO_MODE_NONE: {
@@ -645,6 +653,7 @@ void *demo_thread(void *runtime_state_ptr) {
   }
 #pragma clang diagnostic pop
 
+  fprintf(stderr, "Done demo thread\n");
   pthread_exit(NULL);
 }
 
