@@ -60,7 +60,7 @@ void *demo_thread(void *threadarg);
 
 char g_config_filename[4096] = {0};
 
-static runtime_state_t g_runtime_state = {};
+static runtime_state_t g_runtime_state;
 
 // Global thread handles
 typedef struct {
