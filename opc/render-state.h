@@ -11,6 +11,7 @@ typedef struct {
   uint8_t r;
   uint8_t g;
   uint8_t b;
+  uint8_t unused;
 } __attribute__((__packed__)) buffer_pixel_t;
 
 // Pixel Delta
@@ -26,33 +27,17 @@ typedef struct {
 
 
 typedef struct {
-  buffer_pixel_t *previous_frame_data;
-  buffer_pixel_t *current_frame_data;
-  buffer_pixel_t *next_frame_data;
+  int num_strips_used;
+  int pixels_per_strip;
 
-  pixel_delta_t *frame_dithering_overflow;
-
-  uint8_t has_prev_frame;
-  uint8_t has_current_frame;
-  uint8_t has_next_frame;
-
-  uint32_t frame_size;
-
-  volatile uint32_t frame_counter;
-
-  struct timeval previous_frame_tv;
-  struct timeval current_frame_tv;
-  struct timeval next_frame_tv;
-
-  struct timeval prev_current_delta_tv;
-
-  struct timeval last_remote_data_tv;
+  pthread_mutex_t frame_data_mutex;
+  pthread_cond_t frame_data_cond;
+  buffer_pixel_t *frame_data;
+  buffer_pixel_t *backing_data;
 
   uint32_t lut_lookup_red[257];
   uint32_t lut_lookup_green[257];
   uint32_t lut_lookup_blue[257];
-
-  pthread_mutex_t mutex;
 } render_state_t;
 
 void init_render_state(server_config_t *server_config,
@@ -62,4 +47,7 @@ void set_next_frame_data(render_state_t *render_state, uint8_t *frame_data,
                          uint32_t data_size, uint8_t is_remote);
 void rotate_frames(render_state_t *render_state, uint8_t lock_frame_data);
 
+void set_strip_data(render_state_t *render_state, int strip,
+                    buffer_pixel_t *strip_data, int strip_num_pixels);
+void render_thread(render_state_t *render_state);
 #endif // LEDSCAPE_OPC_FRAME_STATE_H
