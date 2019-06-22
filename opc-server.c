@@ -1,7 +1,6 @@
 /**
  *  OPC image packet receiver.
  */
-// TODO(gsasha): figure out how to do without it (needed for timersub)
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
@@ -66,6 +65,7 @@ static runtime_state_t g_runtime_state = {
                       .output_mapping_name = "original-ledscape",
 
                       .demo_mode = DEMO_MODE_FADE,
+                      .demo_mode_per_strip = {DEMO_MODE_NONE},
 
                       .tcp_port = 7890,
                       .udp_port = 7890,
@@ -445,22 +445,21 @@ void handle_args(int argc, char **argv, server_config_t *server_config) {
   }
 }
 
-int main(int argc, char **argv) {
-
-  server_config_t *server_config = &g_runtime_state.server_config;
-  handle_args(argc, argv, server_config);
-
-  print_server_config(stderr, server_config);
-
-  // Validate the configuration
-  // TODO(gsasha): this output buffer wastes a megabyte. Move it into
-  // validate_server_config, then it will go away after validation.
+void validate_server_config_or_die(server_config_t* server_config) {
   char validation_output_buffer[1024 * 1024];
   if (validate_server_config(server_config, validation_output_buffer,
                              sizeof(validation_output_buffer)) != 0) {
     die("ERROR: Configuration failed validation:\n%s",
         validation_output_buffer);
   }
+}
+
+int main(int argc, char **argv) {
+
+  server_config_t *server_config = &g_runtime_state.server_config;
+  handle_args(argc, argv, server_config);
+  print_server_config(stderr, server_config);
+  validate_server_config_or_die(server_config);
 
   // Save the config file if specified
   // TODO(gsasha): it looks that if config name is given, it is read and
@@ -853,8 +852,7 @@ void *demo_thread(void *runtime_state_ptr) {
     pthread_mutex_unlock(&render_state->mutex);
 
     uint32_t leds_per_strip = server_config->leds_per_strip;
-    uint32_t channel_count =
-        server_config->leds_per_strip * 3 * LEDSCAPE_NUM_STRIPS;
+    uint32_t channel_count = leds_per_strip * 3 * LEDSCAPE_NUM_STRIPS;
     demo_mode_t demo_mode = server_config->demo_mode;
 
     // Enable/disable demo mode and log

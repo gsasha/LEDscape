@@ -20,6 +20,7 @@ typedef struct {
   char output_mapping_name[512];
 
   demo_mode_t demo_mode;
+  demo_mode_t demo_mode_per_strip[LEDSCAPE_NUM_STRIPS];
 
   uint16_t tcp_port;
   uint16_t udp_port;

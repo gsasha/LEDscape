@@ -89,6 +89,13 @@ ledscape_draw(
 	unsigned frame
 );
 
+inline void ledscape_strip_set_color(
+   ledscape_frame_t* ledscape_frame,
+   int strip,
+   color_channel_order_t color_channel_order,
+   uint8_t* buffer,
+   int num_pixels);
+
 inline void ledscape_pixel_set_color(
 	ledscape_pixel_t * const out_pixel,
 	color_channel_order_t color_channel_order,
