@@ -15,26 +15,15 @@ typedef struct {
   uint8_t unused;
 } __attribute__((__packed__)) buffer_pixel_t;
 
-// Pixel Delta
-typedef struct {
-  int8_t r;
-  int8_t g;
-  int8_t b;
-
-  int8_t last_effect_frame_r;
-  int8_t last_effect_frame_g;
-  int8_t last_effect_frame_b;
-} __attribute__((__packed__)) pixel_delta_t;
-
-
 typedef struct {
   int num_strips_used;
-  int pixels_per_strip;
+  int leds_per_strip;
 
   pthread_mutex_t frame_data_mutex;
-  pthread_cond_t frame_data_cond;
   buffer_pixel_t *frame_data;
   buffer_pixel_t *backing_data;
+
+  ledscape_t* leds;
 
   uint32_t lut_lookup_red[257];
   uint32_t lut_lookup_green[257];
@@ -43,14 +32,12 @@ typedef struct {
   struct rate_data rate_data;
 } render_state_t;
 
-void init_render_state(server_config_t *server_config,
-                      render_state_t *render_state);
-
-void set_next_frame_data(render_state_t *render_state, uint8_t *frame_data,
-                         uint32_t data_size, uint8_t is_remote);
-void rotate_frames(render_state_t *render_state, uint8_t lock_frame_data);
+void init_render_state(render_state_t *render_state,
+                       server_config_t *server_config);
 
 void set_strip_data(render_state_t *render_state, int strip,
                     buffer_pixel_t *strip_data, int strip_num_pixels);
+
 void *render_thread(void *render_state);
+
 #endif // LEDSCAPE_OPC_FRAME_STATE_H

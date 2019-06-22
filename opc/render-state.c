@@ -5,8 +5,10 @@
 #include <stdbool.h>
 #include <string.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "opc/color.h"
+#include "opc/server-pru.h"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -23,43 +25,41 @@ void build_lookup_tables(server_config_t *server_config,
                        render_state->lut_lookup_blue);
 }
 
-void init_render_state(server_config_t *server_config,
-                      render_state_t *render_state) {
+void init_ledscape(server_config_t *server_config,
+                   render_state_t *render_state) {
+  char pru0_filename[4096], pru1_filename[4096];
+
+  build_pruN_program_name(server_config->output_mode_name,
+                          server_config->output_mapping_name, 0, pru0_filename,
+                          sizeof(pru0_filename));
+
+  build_pruN_program_name(server_config->output_mode_name,
+                          server_config->output_mapping_name, 1, pru1_filename,
+                          sizeof(pru1_filename));
+
+  // Init LEDscape
+  printf("[main] Starting LEDscape... leds_per_strip %d, pru0_program %s, "
+         "pru1_program %s\n",
+         server_config->leds_per_strip, pru0_filename, pru1_filename);
+  render_state->leds = ledscape_init_with_programs(
+      server_config->leds_per_strip, pru0_filename, pru1_filename);
+}
+
+void init_render_state(render_state_t *render_state,
+                       server_config_t *server_config) {
+  render_state->num_strips_used = server_config->used_strip_count;
+  render_state->leds_per_strip = server_config->leds_per_strip;
+
   build_lookup_tables(server_config, render_state);
 
+  init_ledscape(server_config, render_state);
+
   uint32_t led_count =
-      (uint32_t)(server_config->leds_per_strip) * LEDSCAPE_NUM_STRIPS;
+      (uint32_t)(render_state->leds_per_strip) * LEDSCAPE_NUM_STRIPS;
 
-  if (render_state->frame_size != led_count) {
-    fprintf(stderr, "Allocating buffers for %d pixels (%ju bytes)\n", led_count,
-            (uintmax_t)(led_count * 3 /*channels*/ * 4 /*buffers*/ *
-                        sizeof(uint16_t)));
+  render_state->frame_data = malloc(led_count * sizeof(buffer_pixel_t));
+  render_state->backing_data = malloc(led_count * sizeof(buffer_pixel_t));
 
-    if (render_state->previous_frame_data != NULL) {
-      free(render_state->previous_frame_data);
-      free(render_state->current_frame_data);
-      free(render_state->next_frame_data);
-      free(render_state->frame_dithering_overflow);
-    }
-
-    render_state->frame_size = led_count;
-    render_state->previous_frame_data =
-        malloc(led_count * sizeof(buffer_pixel_t));
-    render_state->current_frame_data =
-        malloc(led_count * sizeof(buffer_pixel_t));
-    render_state->next_frame_data =
-        malloc(led_count * sizeof(buffer_pixel_t));
-    render_state->frame_dithering_overflow =
-        malloc(led_count * sizeof(pixel_delta_t));
-    render_state->has_next_frame = false;
-    printf("frame_size1=%u\n", render_state->frame_size);
-
-    // Init timestamps
-    gettimeofday(&render_state->previous_frame_tv, NULL);
-    gettimeofday(&render_state->current_frame_tv, NULL);
-    gettimeofday(&render_state->next_frame_tv, NULL);
-  }
-  
   rate_data_init(&render_state->rate_data, 5);
 }
 
@@ -84,7 +84,7 @@ int timeval_lt(struct timeval *a, struct timeval *b) {
 }
 
 // return microseconds of b-a;
-int timeval_until(struct timeval *a, struct timeval *b) {
+int timeval_microseconds_until(struct timeval *a, struct timeval *b) {
   return (b->tv_sec - a->tv_sec) * 1000000 + b->tv_usec - a->tv_usec;
 }
 
@@ -92,7 +92,7 @@ void set_strip_data(render_state_t *render_state, int strip,
                     buffer_pixel_t *strip_data, int strip_num_pixels) {
   pthread_mutex_lock(&render_state->frame_data_mutex);
   buffer_pixel_t *frame_strip_data =
-      render_state->frame_data + strip * render_state->pixels_per_strip;
+      render_state->frame_data + strip * render_state->leds_per_strip;
   memcpy(frame_strip_data, strip_data,
          strip_num_pixels * sizeof(buffer_pixel_t));
   pthread_mutex_unlock(&render_state->frame_data_mutex);
@@ -101,6 +101,8 @@ void set_strip_data(render_state_t *render_state, int strip,
 void render_backing_data(render_state_t* render_state) {
   // Apply LUT to the data.
   // Send data to ledscape.
+  // TODO(gsasha):
+  render_state = render_state;
 }
 
 void render_thread_run(render_state_t *render_state) {
@@ -111,18 +113,19 @@ void render_thread_run(render_state_t *render_state) {
   step_frame_tv.tv_usec = 1000000 / 60;
 
   for (;;) {
-    timeval_add(frame_tv, step_frame_tv);
+    timeval_add(&frame_tv, &step_frame_tv);
 
     struct timeval current_time_tv;
     gettimeofday(&current_time_tv, NULL);
 
-    if (timeval_lt(current_time_tv, frame_tv)) {
-      usleep(timeval_until(current_time_tv, frame_tv));
+    if (timeval_lt(&current_time_tv, &frame_tv)) {
+      usleep(timeval_microseconds_until(&current_time_tv, &frame_tv));
     }
 
     pthread_mutex_lock(&render_state->frame_data_mutex);
     memcpy(render_state->backing_data, render_state->frame_data,
-           render_state->frame_size);
+           render_state->num_strips_used * render_state->leds_per_strip *
+               sizeof(buffer_pixel_t));
     pthread_mutex_unlock(&render_state->frame_data_mutex);
 
     render_backing_data(render_state);
@@ -137,5 +140,6 @@ void render_thread_run(render_state_t *render_state) {
 }
 
 void* render_thread(void* render_state) {
-  reunder_thread_run((render_state_t*)render_state);
+  render_thread_run((render_state_t*)render_state);
+  return NULL;
 }
