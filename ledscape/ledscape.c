@@ -1,9 +1,7 @@
-/** \file
+/**
  * Userspace interface to the WS281x LED strip driver.
  *
  */
-#include "ledscape.h"
-#include "util.h"
 #include <errno.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -13,6 +11,9 @@
 #include <strings.h>
 #include <unistd.h>
 #include <sys/types.h>
+
+#include "ledscape/ledscape.h"
+#include "util.h"
 
 /** GPIO pins used by the LEDscape.
  *
@@ -62,24 +63,51 @@ typedef struct ws281x_command {
   volatile unsigned response;
 } __attribute__((__packed__)) ws281x_command_t;
 
-/** Retrieve one of the two frame buffers. */
-ledscape_frame_t *ledscape_frame(ledscape_t *const leds, unsigned int frame) {
-  if (frame >= 2)
-    return NULL;
+ledscape_pixel_t *ledscape_strip(ledscape_t *const leds, int strip) {
+  return leds->frame + strip * leds->pixels_per_strip * 4;
+}
 
-  return (ledscape_frame_t *)((uint8_t *)leds->pru0->ddr +
-                              leds->frame_size * frame);
+void ledscape_strip_set_color(ledscape_t *leds, int strip_index,
+                              color_channel_order_t color_channel_order,
+                              uint8_t *buffer, size_t num_pixels) {
+  if (num_pixels > leds->pixels_per_strip) {
+    num_pixels = leds->pixels_per_strip;
+  }
+  ledscape_pixel_t *strip = ledscape_strip(leds, strip_index);
+  for (size_t i = 0; i < num_pixels; i++) {
+    ledscape_pixel_set_color(strip, color_channel_order,
+                             /* r= */ buffer[0], /* g= */ buffer[1],
+                             /* b= */ buffer[2]);
+    strip++;
+    buffer += 3;
+  }
+}
+
+void ledscape_copy_frame_to_pru(ledscape_t *leds) {
+  int32_t *ddr = (int32_t *)leds->pru0->ddr_addr;
+  for (size_t strip_index = 0; strip_index < LEDSCAPE_NUM_STRIPS;
+       strip_index++) {
+    int32_t *strip =
+        (int32_t *)leds->frame + strip_index * leds->pixels_per_strip;
+    for (size_t pixel = 0; pixel < leds->pixels_per_strip; pixel++) {
+      ddr[pixel * LEDSCAPE_NUM_STRIPS + strip_index] = strip[pixel];
+    }
+  }
 }
 
 /** Initiate the transfer of a frame to the LED strips */
-void ledscape_draw(ledscape_t *const leds, unsigned int frame) {
+void ledscape_draw(ledscape_t *const leds) {
+  ledscape_wait(leds);
+  // Now pru is not processing buffers, we can copy them over.
+  ledscape_copy_frame_to_pru(leds);
 
-  leds->ws281x_0->pixels_dma = leds->pru0->ddr_addr + leds->frame_size * frame;
-  leds->ws281x_1->pixels_dma = leds->pru0->ddr_addr + leds->frame_size * frame;
+  leds->ws281x_0->pixels_dma = leds->pru0->ddr_addr;
+  leds->ws281x_1->pixels_dma = leds->pru0->ddr_addr;
 
   // Wait for any current command to have been acknowledged
-  while (leds->ws281x_0->command || leds->ws281x_1->command)
-    ;
+  while (leds->ws281x_0->command || leds->ws281x_1->command) {
+    // busy wait.
+  }
 
   // Zero the responses so we can wait for them
   leds->ws281x_0->response = leds->ws281x_1->response = 0;
@@ -95,12 +123,6 @@ void ledscape_draw(ledscape_t *const leds, unsigned int frame) {
 void ledscape_wait(ledscape_t *const leds) {
   while (1) {
     pru_wait_interrupt();
-
-    // printf("pru0: (%d,%d), pru1: (%d,%d)\n",
-    // 	leds->ws281x_0->command, leds->ws281x_0->response,
-    // 	leds->ws281x_1->command, leds->ws281x_1->response
-    // );
-
     if (leds->ws281x_0->response && leds->ws281x_1->response)
       return;
   }
@@ -112,26 +134,31 @@ ledscape_t *ledscape_init(unsigned num_pixels) {
       "pru/bin/ws281x-original-ledscape-pru1.bin");
 }
 
-ledscape_t *ledscape_init_with_programs(unsigned num_pixels,
+ledscape_t *ledscape_init_with_programs(unsigned pixels_per_strip,
                                         const char *pru0_program_filename,
                                         const char *pru1_program_filename) {
   pru_t *const pru0 = pru_init(0);
   pru_t *const pru1 = pru_init(1);
 
-  const size_t frame_size = num_pixels * LEDSCAPE_NUM_STRIPS * 4;
+  const size_t frame_size = pixels_per_strip * LEDSCAPE_NUM_STRIPS * 4;
 
-  if (2 * frame_size > pru0->ddr_size)
+  if (2 * frame_size > pru0->ddr_size) {
     die("Pixel data needs at least 2 * %zu, only %zu in DDR\n", frame_size,
         pru0->ddr_size);
+  }
 
   ledscape_t *const leds = calloc(1, sizeof(*leds));
 
+  ledscape_pixel_t* frame = malloc(frame_size);
+  memset(frame, 0, frame_size);
+
   *leds = (ledscape_t){.pru0 = pru0,
                        .pru1 = pru1,
-                       .num_pixels = num_pixels,
+                       .pixels_per_strip = pixels_per_strip,
                        .frame_size = frame_size,
                        .pru0_program_filename = pru0_program_filename,
                        .pru1_program_filename = pru1_program_filename,
+                       .frame = frame,
                        .ws281x_0 = pru0->data_ram,
                        .ws281x_1 = pru1->data_ram};
 
@@ -139,7 +166,7 @@ ledscape_t *ledscape_init_with_programs(unsigned num_pixels,
       .pixels_dma = 0, // will be set in draw routine
       .command = 0,
       .response = 0,
-      .num_pixels = leds->num_pixels,
+      .num_pixels = leds->pixels_per_strip,
   };
 
   // Configure all of our output pins.

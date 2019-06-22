@@ -5,7 +5,7 @@
 #include <inttypes.h>
 #include <pthread.h>
 
-#include "ledscape.h"
+#include "ledscape/ledscape.h"
 
 typedef enum {
   DEMO_MODE_NONE = 0,

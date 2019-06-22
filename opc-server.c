@@ -24,7 +24,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "ledscape.h"
+#include "ledscape/ledscape.h"
 #include "lib/cesanta/mongoose.h"
 #include "opc/color.h"
 #include "opc/runtime-state.h"
@@ -631,9 +631,6 @@ void *render_thread(void *runtime_state_ptr) {
     // Setup LEDscape for this frame
     buffer_index = (buffer_index + 1) % 2;
 
-    ledscape_frame_t *const frame =
-        ledscape_frame(runtime_state->leds, buffer_index);
-
     // Build the render frame
     uint32_t led_count = render_state->frame_size;
     uint32_t leds_per_strip = led_count / LEDSCAPE_NUM_STRIPS;
@@ -677,9 +674,6 @@ void *render_thread(void *runtime_state_ptr) {
             &render_state->current_frame_data[data_index];
         pixel_delta_t *pixel_in_overflow =
             &render_state->frame_dithering_overflow[data_index];
-
-        ledscape_pixel_t *const pixel_out =
-            &frame[led_index].strip[strip_index];
 
         int32_t interpolatedR;
         int32_t interpolatedG;
@@ -749,7 +743,8 @@ void *render_thread(void *runtime_state_ptr) {
         uint8_t g = (uint8_t)min((ditheredG + 0x80) >> 8, 255);
         uint8_t b = (uint8_t)min((ditheredB + 0x80) >> 8, 255);
 
-        ledscape_pixel_set_color(pixel_out, color_channel_order, r, g, b);
+        ledscape_set_color(runtime_state->leds, color_channel_order,
+                           strip_index, led_index, r, g, b);
 
         // if (led_index == 0 && strip_index == 3) {
         //   printf("channel %d: %03d %03d %03d\n", strip_index, r, g, b);
@@ -776,10 +771,8 @@ void *render_thread(void *runtime_state_ptr) {
       }
     }
 
-    // Wait for previous send to complete if still in progress
-    ledscape_wait(runtime_state->leds);
     // Send the frame to the PRU
-    ledscape_draw(runtime_state->leds, buffer_index);
+    ledscape_draw(runtime_state->leds);
 
     pthread_mutex_unlock(&render_state->mutex);
 

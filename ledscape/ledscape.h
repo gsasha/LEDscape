@@ -51,8 +51,10 @@ typedef struct {
 	pru_t * pru1;
 	const char* pru0_program_filename;
 	const char* pru1_program_filename;
-	unsigned num_pixels;
+	size_t pixels_per_strip;
 	size_t frame_size;
+        // Frame contains the pixel data in per-strip order.
+        ledscape_pixel_t* frame;
 } ledscape_t;
 
 
@@ -65,36 +67,24 @@ typedef enum {
 	COLOR_ORDER_BRG // Old LEDscape default
 } color_channel_order_t;
 
+ledscape_t *ledscape_init(unsigned pixels_per_strip);
 
-extern ledscape_t * ledscape_init(
-unsigned num_pixels
-);
+ledscape_t *ledscape_init_with_programs(unsigned pixels_per_strip,
+                                        const char *pru0_program_filename,
+                                        const char *pru1_program_filename);
 
-extern ledscape_t * ledscape_init_with_programs(
-	unsigned num_pixels,
-	const char* pru0_program_filename,
-	const char* pru1_program_filename
-);
+ledscape_pixel_t *ledscape_strip(ledscape_t *const leds, int strip);
 
+void ledscape_draw(ledscape_t *const leds);
 
-extern ledscape_frame_t *
-ledscape_frame(
-	ledscape_t * const leds,
-	unsigned frame
-);
-
-extern void
-ledscape_draw(
-	ledscape_t * const leds,
-	unsigned frame
-);
-
-inline void ledscape_strip_set_color(
-   ledscape_frame_t* ledscape_frame,
-   int strip,
+// Set color from a rgb buffer, i.e., triples of uint8_t containing r,g,b
+// of each pixel of the strip, continuously.
+void ledscape_strip_set_color(
+   ledscape_t* leds,
+   int strip_index,
    color_channel_order_t color_channel_order,
    uint8_t* buffer,
-   int num_pixels);
+   size_t num_pixels);
 
 inline void ledscape_pixel_set_color(
 	ledscape_pixel_t * const out_pixel,
@@ -142,42 +132,20 @@ inline void ledscape_pixel_set_color(
 	}
 }
 
-inline void ledscape_set_color(
-	ledscape_frame_t * const frame,
-	color_channel_order_t color_channel_order,
-	uint8_t strip,
-	uint16_t pixel,
-	uint8_t r,
-	uint8_t g,
-	uint8_t b
-) {
-	ledscape_pixel_set_color(
-		&frame[pixel].strip[strip],
-		color_channel_order,
-		r,
-		g,
-		b
-	);
+inline void ledscape_set_color(ledscape_t *const leds,
+                               color_channel_order_t color_channel_order,
+                               uint8_t strip, uint16_t pixel, uint8_t r,
+                               uint8_t g, uint8_t b) {
+  ledscape_pixel_set_color(ledscape_strip(leds, strip) + pixel,
+                           color_channel_order, r, g, b);
 }
 
-extern void
-ledscape_wait(
-	ledscape_t * const leds
-);
+void ledscape_wait(ledscape_t *const leds);
+void ledscape_close(ledscape_t *const leds);
 
+const char *
+color_channel_order_to_string(color_channel_order_t color_channel_order);
 
-extern void
-ledscape_close(
-	ledscape_t * const leds
-);
-
-
-extern const char* color_channel_order_to_string(
-	color_channel_order_t color_channel_order
-);
-
-extern color_channel_order_t color_channel_order_from_string(
-	const char* str
-);
+color_channel_order_t color_channel_order_from_string(const char *str);
 
 #endif
