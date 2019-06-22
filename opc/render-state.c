@@ -100,6 +100,15 @@ void set_strip_data(render_state_t *render_state, int strip,
 
 void render_backing_data(render_state_t* render_state) {
   // Apply LUT to the data.
+  uint8_t *lut_lookup_r = render_state->lut_lookup_red;
+  uint8_t *lut_lookup_g = render_state->lut_lookup_green;
+  uint8_t *lut_lookup_b = render_state->lut_lookup_blue;
+  for (int i = 0; i < render_state->num_leds; i++) {
+    buffer_pixel_t* pixel = &render_state->backing_data[i];
+    pixel->r = lut_lookup_r[pixel->r];
+    pixel->g = lut_lookup_g[pixel->g];
+    pixel->b = lut_lookup_b[pixel->b];
+  }
   // Send data to ledscape.
   // TODO(gsasha):
   render_state = render_state;

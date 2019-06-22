@@ -18,6 +18,7 @@ typedef struct {
 typedef struct {
   int num_strips_used;
   int leds_per_strip;
+  int num_leds;
 
   pthread_mutex_t frame_data_mutex;
   buffer_pixel_t *frame_data;
