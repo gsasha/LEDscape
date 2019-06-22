@@ -10,6 +10,6 @@ void HSBtoRGB(int32_t hue, int32_t sat, int32_t val, uint8_t out[]);
 
 // Interpolate to a given white point for 257 entries.
 void compute_lookup_table(float white_point, double lum_power,
-                          uint32_t *lookup);
+                          uint8_t *lookup);
 
 #endif // LEDSCAPE_OPC_COLOR_H

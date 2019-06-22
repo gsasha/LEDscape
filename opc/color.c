@@ -64,14 +64,14 @@ void HSBtoRGB(int32_t hue, int32_t sat, int32_t val, uint8_t out[]) {
 }
 
 void compute_lookup_table(float white_point, double lum_power,
-                          uint32_t *lookup) {
+                          uint8_t *lookup) {
 
   for (uint16_t i = 0; i < 257; i++) {
     double normalI = i * white_point / 256.;
 
     double output = pow(normalI, lum_power);
-    int64_t longOutput = (int64_t)((output * 0xFFFF) + 0.5);
-    int32_t clampedOutput = (int32_t)max(0, min(0xFFFF, longOutput));
+    int64_t longOutput = (int64_t)((output * 0xFF) + 0.5);
+    int32_t clampedOutput = (int32_t)max(0, min(0xFF, longOutput));
 
     lookup[i] = (uint32_t)clampedOutput;
   }
