@@ -119,7 +119,7 @@ void ledscape_draw(ledscape_t *const leds) {
   leds->ws281x_0->command = 1;
   leds->ws281x_1->command = 1;
  
-  ledscape_wait();
+  ledscape_wait(leds);
 }
 
 /** Wait for the current frame to finish transfering to the strips.
