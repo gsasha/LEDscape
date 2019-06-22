@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 
+#include "opc/rate-data.h"
 #include "opc/server-config.h"
 
 typedef struct {
@@ -38,6 +39,8 @@ typedef struct {
   uint32_t lut_lookup_red[257];
   uint32_t lut_lookup_green[257];
   uint32_t lut_lookup_blue[257];
+ 
+  struct rate_data rate_data;
 } render_state_t;
 
 void init_render_state(server_config_t *server_config,
@@ -49,5 +52,5 @@ void rotate_frames(render_state_t *render_state, uint8_t lock_frame_data);
 
 void set_strip_data(render_state_t *render_state, int strip,
                     buffer_pixel_t *strip_data, int strip_num_pixels);
-void render_thread(render_state_t *render_state);
+void *render_thread(void *render_state);
 #endif // LEDSCAPE_OPC_FRAME_STATE_H

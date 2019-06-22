@@ -1,7 +1,7 @@
 #include "opc/rate-data.h"
 
 void rate_data_init(struct rate_data *data, double window_size_seconds) {
-  data->window_size_seconds = 0;
+  data->window_size_seconds = window_size_seconds;
   gettimeofday(&data->initial_time, NULL);
   data->total_events = 0;
   data->total_rate = 0;
@@ -16,7 +16,7 @@ double seconds_since(struct timeval *a, struct timeval *b) {
   return seconds_b - seconds_a;
 }
 
-int rate_data_add_event(struct rate_data *data) {
+bool rate_data_add_event(struct rate_data *data) {
   struct timeval current_time;
   gettimeofday(&current_time, NULL);
 

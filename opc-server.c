@@ -49,7 +49,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Threads
-void *render_thread(void *threadarg);
+//void *render_thread(void *threadarg);
 void *udp_server_thread(void *threadarg);
 void *tcp_server_thread(void *threadarg);
 void *e131_server_thread(void *threadarg);
@@ -514,7 +514,7 @@ inline uint32_t lutInterpolate(uint32_t value, uint32_t *lut) {
   return (lut[index] * invAlpha + lut[index + 1] * alpha) >> 8;
 }
 
-void *render_thread(void *runtime_state_ptr) {
+void *render_thread_old(void *runtime_state_ptr) {
   runtime_state_t *runtime_state = (runtime_state_t *)runtime_state_ptr;
   server_config_t *server_config = &runtime_state->server_config;
   render_state_t *render_state = &runtime_state->render_state;

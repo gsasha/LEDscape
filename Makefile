@@ -6,6 +6,7 @@ TARGETS += opc-server
 
 LEDSCAPE_OBJS = ledscape/ledscape.o pru.o util.o\
  opc/color.o opc/render-state.o opc/runtime-state.o\
+ opc/rate-data.o\
  opc/server-config.o opc/server-error.o opc/server-pru.o\
  lib/cesanta/mongoose.o lib/cesanta/frozen.o
 LEDSCAPE_LIB := libledscape.a
