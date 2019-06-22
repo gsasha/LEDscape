@@ -85,8 +85,7 @@ void ledscape_strip_set_color(ledscape_t *leds, int strip_index,
 
 void ledscape_copy_frame_to_pru(ledscape_t *leds) {
   fprintf(stderr, "copying frame to pru\n");
-/*
-  int32_t *ddr = (int32_t *)leds->pru0->ddr_addr;
+  int32_t *ddr = (int32_t *)leds->pru0->ddr;
   for (size_t strip_index = 0; strip_index < LEDSCAPE_NUM_STRIPS;
        strip_index++) {
     int32_t *strip =
@@ -96,7 +95,6 @@ void ledscape_copy_frame_to_pru(ledscape_t *leds) {
       //fprintf(stderr, "%d:%d - %x\n", strip_index, pixel, strip[pixel]);
     }
   }
-*/
 }
 
 /** Initiate the transfer of a frame to the LED strips */
