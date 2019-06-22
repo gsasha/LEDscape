@@ -538,7 +538,6 @@ void *render_thread(void *runtime_state_ptr) {
   uint32_t frames_since_last_fps_report = 0;
   uint64_t frame_duration_avg_usec = 2000;
 
-  uint8_t buffer_index = 0;
   int8_t ditheringFrame = 0;
   for (;;) {
     pthread_mutex_lock(&render_state->mutex);
@@ -628,8 +627,6 @@ void *render_thread(void *runtime_state_ptr) {
     // g_runtime_state.prev_current_delta_tv.tv_usec), 	frame_progress16
     // );
 
-    // Setup LEDscape for this frame
-    buffer_index = (buffer_index + 1) % 2;
 
     // Build the render frame
     uint32_t led_count = render_state->frame_size;
@@ -660,6 +657,9 @@ void *render_thread(void *runtime_state_ptr) {
 
     color_channel_order_t color_channel_order =
         server_config->color_channel_order;
+
+    uint8_t buffer[server_config->leds_per_strip * 3];
+    uint8_t* buffer_ptr = buffer;
 
     // Only allow dithering to take effect if it blinks faster than 60fps
     uint32_t maxDitherFrames = 16667 / frame_duration_avg_usec;
@@ -743,8 +743,11 @@ void *render_thread(void *runtime_state_ptr) {
         uint8_t g = (uint8_t)min((ditheredG + 0x80) >> 8, 255);
         uint8_t b = (uint8_t)min((ditheredB + 0x80) >> 8, 255);
 
-        ledscape_set_color(runtime_state->leds, color_channel_order,
-                           strip_index, led_index, r, g, b);
+        //ledscape_set_color(runtime_state->leds, color_channel_order,
+        //                   strip_index, led_index, r, g, b);
+        buffer_ptr[0] = r;
+        buffer_ptr[1] = g;
+        buffer_ptr[2] = b;
 
         // if (led_index == 0 && strip_index == 3) {
         //   printf("channel %d: %03d %03d %03d\n", strip_index, r, g, b);
@@ -769,6 +772,9 @@ void *render_thread(void *runtime_state_ptr) {
           pixel_in_overflow->b = (uint8_t)((int16_t)ditheredB - (b * 257));
         }
       }
+      ledscape_strip_set_color(runtime_state->leds, color_channel_order,
+                               strip_index, buffer,
+                               server_config->leds_per_strip);
     }
 
     // Send the frame to the PRU
