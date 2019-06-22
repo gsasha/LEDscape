@@ -46,6 +46,9 @@ void init_render_state(render_state_t *render_state,
                        server_config_t *server_config) {
   render_state->num_strips_used = server_config->used_strip_count;
   render_state->leds_per_strip = server_config->leds_per_strip;
+  render_state->num_leds =
+      render_state->leds_per_strip * render_state->num_strips_used;
+  render_state->color_channel_order = server_config->color_channel_order;
 
   render_state->lut_enabled = server_config->lut_enabled;
   if (render_state->lut_enabled) {
@@ -89,12 +92,12 @@ int timeval_microseconds_until(struct timeval *a, struct timeval *b) {
 }
 
 void set_strip_data(render_state_t *render_state, int strip,
-                    buffer_pixel_t *strip_data, int strip_num_pixels) {
+                    buffer_pixel_t *strip_data, int strip_num_leds) {
   pthread_mutex_lock(&render_state->frame_data_mutex);
   buffer_pixel_t *frame_strip_data =
       render_state->frame_data + strip * render_state->leds_per_strip;
   memcpy(frame_strip_data, strip_data,
-         strip_num_pixels * sizeof(buffer_pixel_t));
+         strip_num_leds * sizeof(buffer_pixel_t));
   pthread_mutex_unlock(&render_state->frame_data_mutex);
 }
 
@@ -104,14 +107,15 @@ void render_backing_data(render_state_t* render_state) {
   uint8_t *lut_lookup_g = render_state->lut_lookup_green;
   uint8_t *lut_lookup_b = render_state->lut_lookup_blue;
   for (int i = 0; i < render_state->num_leds; i++) {
-    buffer_pixel_t* pixel = &render_state->backing_data[i];
+    buffer_pixel_t *pixel = &render_state->backing_data[i];
     pixel->r = lut_lookup_r[pixel->r];
     pixel->g = lut_lookup_g[pixel->g];
     pixel->b = lut_lookup_b[pixel->b];
   }
   // Send data to ledscape.
-  // TODO(gsasha):
-  render_state = render_state;
+  ledscape_set_rgba_data(render_state->leds, render_state->color_channel_order,
+                         (uint8_t *)render_state->backing_data,
+                         render_state->num_leds);
 }
 
 void render_thread_run(render_state_t *render_state) {

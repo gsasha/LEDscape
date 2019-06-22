@@ -86,6 +86,10 @@ void ledscape_strip_set_color(
    uint8_t* buffer,
    size_t num_pixels);
 
+void ledscape_set_rgba_data(ledscape_t *leds,
+                            color_channel_order_t color_channel_order,
+                            uint8_t *buffer, size_t num_pixels);
+
 inline void ledscape_pixel_set_color(
 	ledscape_pixel_t * const out_pixel,
 	color_channel_order_t color_channel_order,

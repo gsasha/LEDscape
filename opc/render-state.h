@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 
+#include "ledscape/ledscape.h"
 #include "opc/rate-data.h"
 #include "opc/server-config.h"
 
@@ -19,6 +20,7 @@ typedef struct {
   int num_strips_used;
   int leds_per_strip;
   int num_leds;
+  color_channel_order_t color_channel_order;
 
   pthread_mutex_t frame_data_mutex;
   buffer_pixel_t *frame_data;
