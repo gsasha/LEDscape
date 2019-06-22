@@ -10,9 +10,6 @@
 #include "opc/color.h"
 #include "opc/server-pru.h"
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#define max(a, b) ((a) > (b) ? (a) : (b))
-
 void build_lookup_tables(server_config_t *server_config,
                          render_state_t *render_state) {
   double lum_power = server_config->lum_power;
@@ -50,7 +47,10 @@ void init_render_state(render_state_t *render_state,
   render_state->num_strips_used = server_config->used_strip_count;
   render_state->leds_per_strip = server_config->leds_per_strip;
 
-  build_lookup_tables(server_config, render_state);
+  render_state->lut_enabled = server_config->lut_enabled;
+  if (render_state->lut_enabled) {
+    build_lookup_tables(server_config, render_state);
+  }
 
   init_ledscape(server_config, render_state);
 

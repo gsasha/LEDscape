@@ -25,9 +25,10 @@ typedef struct {
 
   ledscape_t* leds;
 
-  uint32_t lut_lookup_red[257];
-  uint32_t lut_lookup_green[257];
-  uint32_t lut_lookup_blue[257];
+  uint8_t lut_lookup_red[257];
+  uint8_t lut_lookup_green[257];
+  uint8_t lut_lookup_blue[257];
+  bool lut_enabled;
  
   struct rate_data rate_data;
 } render_state_t;
