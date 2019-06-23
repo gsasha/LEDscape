@@ -85,18 +85,22 @@ static runtime_state_t g_runtime_state = {
 
     .render_state =
         {
-            .previous_frame_data = (buffer_pixel_t *)NULL,
-            .current_frame_data = (buffer_pixel_t *)NULL,
-            .next_frame_data = (buffer_pixel_t *)NULL,
-            .has_prev_frame = false,
-            .has_current_frame = false,
-            .has_next_frame = false,
-            .frame_dithering_overflow = (pixel_delta_t *)NULL,
-            .frame_size = 0,
-            .mutex = PTHREAD_MUTEX_INITIALIZER,
-            .last_remote_data_tv = {.tv_sec = 0, .tv_usec = 0},
+            .num_strips_used = 0,
+            .leds_per_strip = 0,
+            .num_leds = 0,
+            .color_channel_order = COLOR_ORDER_BGR,
+
+            .frame_data_mutex = PTHREAD_MUTEX_INITIALIZER,
+            .frame_data = NULL,
+            .backing_data = NULL,
+
+            .leds = NULL,
+
+            .lut_lookup_red = {0},
+            .lut_lookup_green = {0},
+            .lut_lookup_blue = {0},
+            .lut_enabled = false,
         },
-    .leds = NULL,
 };
 
 // Global thread handles
@@ -514,300 +518,6 @@ inline uint32_t lutInterpolate(uint32_t value, uint32_t *lut) {
   return (lut[index] * invAlpha + lut[index + 1] * alpha) >> 8;
 }
 
-void *render_thread_old(void *runtime_state_ptr) {
-  runtime_state_t *runtime_state = (runtime_state_t *)runtime_state_ptr;
-  server_config_t *server_config = &runtime_state->server_config;
-  render_state_t *render_state = &runtime_state->render_state;
-
-  fprintf(stderr, "[render] Starting render thread for %u total pixels\n",
-          server_config->leds_per_strip * LEDSCAPE_NUM_STRIPS);
-
-  if (runtime_state->leds == NULL) {
-    fprintf(stderr,
-            "[render] runtime_state->leds is expected to be initialized\n");
-    pthread_exit(NULL);
-  }
-
-  // Timing Variables
-  struct timeval frame_progress_tv, now_tv;
-  uint16_t frame_progress16 = 0, inv_frame_progress16 = 0;
-
-  const unsigned fps_report_interval_seconds = 10;
-  uint64_t last_report = 0;
-  uint64_t frame_duration_sum_usec = 0;
-  uint32_t frames_since_last_fps_report = 0;
-  uint64_t frame_duration_avg_usec = 2000;
-
-  int8_t ditheringFrame = 0;
-  for (;;) {
-    pthread_mutex_lock(&render_state->mutex);
-
-    // Increment the frame counter
-    render_state->frame_counter++;
-
-    bool interpolation_enabled = server_config->interpolation_enabled;
-
-    // If interpolation not enabled, then we only care about the current frame
-    // and want to fully display it immediately
-
-    if (!interpolation_enabled) {
-
-      if (render_state->has_next_frame) {
-
-        // Make the next frame the current frame
-        rotate_frames(render_state, false);
-      }
-
-      if (!render_state->has_current_frame) {
-        pthread_mutex_unlock(&render_state->mutex);
-        usleep(10e3 /* 10ms */);
-        continue;
-      }
-
-    } else {
-
-      // Skip frames if there isn't enough data
-      if (!render_state->has_prev_frame || !render_state->has_current_frame) {
-        pthread_mutex_unlock(&render_state->mutex);
-        usleep(10e3 /* 10ms */);
-        continue;
-      }
-
-      // Calculate the time delta and current percentage (as a 16-bit value)
-      gettimeofday(&now_tv, NULL);
-      timersub(&now_tv, &render_state->next_frame_tv, &frame_progress_tv);
-
-      // Calculate current frame and previous frame time
-      uint64_t frame_progress_us = (uint64_t)(frame_progress_tv.tv_sec * 1e6 +
-                                              frame_progress_tv.tv_usec);
-      uint64_t last_frame_time_us =
-          (uint64_t)(render_state->prev_current_delta_tv.tv_sec * 1e6 +
-                     render_state->prev_current_delta_tv.tv_usec);
-
-      // Check for current frame exhaustion
-      if (frame_progress_us > last_frame_time_us) {
-        uint8_t has_next_frame = render_state->has_next_frame;
-        pthread_mutex_unlock(&render_state->mutex);
-
-        // This should only happen in a final frame case -- to avoid early
-        // switching (and some nasty resulting artifacts) we only force frame
-        // rotation if the next frame is really late.
-        if (has_next_frame && frame_progress_us > last_frame_time_us * 2) {
-          // If we have more data, rotate it in.
-          printf("Need data: rotating in; frame_progress_us=%llu; "
-                 "last_frame_time_us=%llu\n",
-                 frame_progress_us, last_frame_time_us);
-          rotate_frames(render_state, true);
-        } else {
-          // Otherwise sleep for a moment and wait for more data
-          printf("Need data: none available; frame_progress_us=%llu; "
-                 "last_frame_time_us=%llu\n",
-                 frame_progress_us, last_frame_time_us);
-          usleep(1e3);
-        }
-
-        continue;
-      }
-
-      frame_progress16 =
-          (uint16_t)((frame_progress_us << 16) / last_frame_time_us);
-      inv_frame_progress16 = (uint16_t)(0xFFFF - frame_progress16);
-
-      if (frame_progress_tv.tv_sec > 5) {
-        printf("[render] No data for 5 seconds; suspending render thread.\n");
-        pthread_mutex_unlock(&render_state->mutex);
-        usleep(100e3 /* 100ms */);
-        continue;
-      }
-    }
-
-    // printf("%d of %d (%d)\n",
-    // 	(frame_progress_tv.tv_sec*1000000 + frame_progress_tv.tv_usec) ,
-    // 	(g_runtime_state.prev_current_delta_tv.tv_sec*1000000 +
-    // g_runtime_state.prev_current_delta_tv.tv_usec), 	frame_progress16
-    // );
-
-
-    // Build the render frame
-    uint32_t led_count = render_state->frame_size;
-    uint32_t leds_per_strip = led_count / LEDSCAPE_NUM_STRIPS;
-    uint32_t data_index = 0;
-
-    // Update the dithering frame counter
-    ditheringFrame++;
-
-    // Timing stuff
-    struct timeval start_tv, stop_tv, delta_tv;
-    gettimeofday(&start_tv, NULL);
-
-    uint32_t used_strip_count;
-
-    // Check the server config for dithering and interpolation options
-
-    // Use the strip count from configs. This can save time that would be used
-    // dithering
-    used_strip_count =
-        min(server_config->used_strip_count, LEDSCAPE_NUM_STRIPS);
-
-    // Only enable dithering if we're better than 100fps
-    bool dithering_enabled =
-        (frame_duration_avg_usec < 10000) && server_config->dithering_enabled;
-
-    bool lut_enabled = server_config->lut_enabled;
-
-    color_channel_order_t color_channel_order =
-        server_config->color_channel_order;
-
-    uint8_t buffer[server_config->leds_per_strip * 3];
-    uint8_t* buffer_ptr = buffer;
-
-    // Only allow dithering to take effect if it blinks faster than 60fps
-    uint32_t maxDitherFrames = 16667 / frame_duration_avg_usec;
-
-    for (uint32_t strip_index = 0; strip_index < used_strip_count;
-         strip_index++) {
-      for (uint32_t led_index = 0; led_index < leds_per_strip;
-           led_index++, data_index++) {
-        buffer_pixel_t *pixel_in_prev =
-            &render_state->previous_frame_data[data_index];
-        buffer_pixel_t *pixel_in_current =
-            &render_state->current_frame_data[data_index];
-        pixel_delta_t *pixel_in_overflow =
-            &render_state->frame_dithering_overflow[data_index];
-
-        int32_t interpolatedR;
-        int32_t interpolatedG;
-        int32_t interpolatedB;
-
-        // Interpolate
-        if (interpolation_enabled) {
-          interpolatedR = (pixel_in_prev->r * inv_frame_progress16 +
-                           pixel_in_current->r * frame_progress16) >>
-                          8;
-          interpolatedG = (pixel_in_prev->g * inv_frame_progress16 +
-                           pixel_in_current->g * frame_progress16) >>
-                          8;
-          interpolatedB = (pixel_in_prev->b * inv_frame_progress16 +
-                           pixel_in_current->b * frame_progress16) >>
-                          8;
-        } else {
-          interpolatedR = pixel_in_current->r << 8;
-          interpolatedG = pixel_in_current->g << 8;
-          interpolatedB = pixel_in_current->b << 8;
-        }
-
-        // Apply LUT
-        if (lut_enabled) {
-          interpolatedR = lutInterpolate((uint32_t)interpolatedR,
-                                         render_state->lut_lookup_red);
-          interpolatedG = lutInterpolate((uint32_t)interpolatedG,
-                                         render_state->lut_lookup_green);
-          interpolatedB = lutInterpolate((uint32_t)interpolatedB,
-                                         render_state->lut_lookup_blue);
-        }
-
-        // Reset dithering for this pixel if it's been too long since it
-        // actually changed anything. This serves to prevent visible blinking
-        // pixels.
-        if (abs(abs(pixel_in_overflow->last_effect_frame_r) -
-                abs(ditheringFrame)) > maxDitherFrames) {
-          pixel_in_overflow->r = 0;
-          pixel_in_overflow->last_effect_frame_r = ditheringFrame;
-        }
-
-        if (abs(abs(pixel_in_overflow->last_effect_frame_g) -
-                abs(ditheringFrame)) > maxDitherFrames) {
-          pixel_in_overflow->g = 0;
-          pixel_in_overflow->last_effect_frame_g = ditheringFrame;
-        }
-
-        if (abs(abs(pixel_in_overflow->last_effect_frame_b) -
-                abs(ditheringFrame)) > maxDitherFrames) {
-          pixel_in_overflow->b = 0;
-          pixel_in_overflow->last_effect_frame_b = ditheringFrame;
-        }
-
-        // Apply dithering overflow
-        int32_t ditheredR = interpolatedR;
-        int32_t ditheredG = interpolatedG;
-        int32_t ditheredB = interpolatedB;
-
-        if (dithering_enabled) {
-          ditheredR += pixel_in_overflow->r;
-          ditheredG += pixel_in_overflow->g;
-          ditheredB += pixel_in_overflow->b;
-        }
-
-        // Calculate and assign output values
-        uint8_t r = (uint8_t)min((ditheredR + 0x80) >> 8, 255);
-        uint8_t g = (uint8_t)min((ditheredG + 0x80) >> 8, 255);
-        uint8_t b = (uint8_t)min((ditheredB + 0x80) >> 8, 255);
-
-        //ledscape_set_color(runtime_state->leds, color_channel_order,
-        //                   strip_index, led_index, r, g, b);
-        buffer_ptr[0] = r;
-        buffer_ptr[1] = g;
-        buffer_ptr[2] = b;
-
-        // if (led_index == 0 && strip_index == 3) {
-        //   printf("channel %d: %03d %03d %03d\n", strip_index, r, g, b);
-        // }
-
-        // Check for interpolation effect
-        if (r != (interpolatedR + 0x80) >> 8)
-          pixel_in_overflow->last_effect_frame_r = ditheringFrame;
-        if (g != (interpolatedG + 0x80) >> 8)
-          pixel_in_overflow->last_effect_frame_g = ditheringFrame;
-        if (b != (interpolatedB + 0x80) >> 8)
-          pixel_in_overflow->last_effect_frame_b = ditheringFrame;
-
-        // Recalculate Overflow
-        // NOTE: For some strange reason, reading the values from pixel_out
-        // causes strange memory corruption. As such we use temporary variables,
-        // r, g, and b. It probably has to do with things being loaded into the
-        // CPU cache when read, as such, don't read pixel_out from here.
-        if (dithering_enabled) {
-          pixel_in_overflow->r = (uint8_t)((int16_t)ditheredR - (r * 257));
-          pixel_in_overflow->g = (uint8_t)((int16_t)ditheredG - (g * 257));
-          pixel_in_overflow->b = (uint8_t)((int16_t)ditheredB - (b * 257));
-        }
-      }
-      ledscape_strip_set_color(runtime_state->leds, color_channel_order,
-                               strip_index, buffer,
-                               server_config->leds_per_strip);
-    }
-
-    // Send the frame to the PRU
-    ledscape_draw(runtime_state->leds);
-
-    pthread_mutex_unlock(&render_state->mutex);
-
-    // Output Timing Info
-    gettimeofday(&stop_tv, NULL);
-    timersub(&stop_tv, &start_tv, &delta_tv);
-
-    frames_since_last_fps_report++;
-    frame_duration_sum_usec += delta_tv.tv_usec;
-    if (stop_tv.tv_sec - last_report >= fps_report_interval_seconds) {
-      last_report = stop_tv.tv_sec;
-
-      frame_duration_avg_usec =
-          frame_duration_sum_usec / frames_since_last_fps_report;
-      printf("[render] fps_info={frame_avg_usec: %qu, possible_fps: %.2f, "
-             "actual_fps: %.2f, sample_frames: %u}\n",
-             frame_duration_avg_usec, (1.0e6 / frame_duration_avg_usec),
-             frames_since_last_fps_report * 1.0 / fps_report_interval_seconds,
-             frames_since_last_fps_report);
-
-      frames_since_last_fps_report = 0;
-      frame_duration_sum_usec = 0;
-    }
-  }
-
-  ledscape_close(runtime_state->leds);
-  pthread_exit(NULL);
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // OPC Protocol Structures
 
@@ -837,14 +547,18 @@ void *demo_thread(void *runtime_state_ptr) {
   render_state_t *render_state = &runtime_state->render_state;
   fprintf(stderr, "Starting demo data thread\n");
 
-  uint8_t *buffer = NULL;
+  buffer_pixel_t *buffer = NULL;
   uint32_t buffer_size = 0;
 
-  struct timeval now_tv, delta_tv;
-  uint8_t demo_enabled = false;
+//  struct timeval now_tv, delta_tv;
+  uint8_t demo_enabled = true;
+
+  buffer = malloc(render_state->leds_per_strip * sizeof(buffer_pixel_t));
+  memset(buffer, 0, buffer_size);
 
   for (uint16_t frame_index = 0; /*ever*/; frame_index += 3) {
     // Calculate time since last remote data
+/*
     pthread_mutex_lock(&render_state->mutex);
     gettimeofday(&now_tv, NULL);
     timersub(&now_tv, &render_state->last_remote_data_tv, &delta_tv);
@@ -852,9 +566,11 @@ void *demo_thread(void *runtime_state_ptr) {
 
     uint32_t leds_per_strip = server_config->leds_per_strip;
     uint32_t channel_count = leds_per_strip * 3 * LEDSCAPE_NUM_STRIPS;
+*/
     demo_mode_t demo_mode = server_config->demo_mode;
 
     // Enable/disable demo mode and log
+/*
     if (delta_tv.tv_sec > 5) {
       if (!demo_enabled) {
         printf("[demo] Starting Demo: %s\n", demo_mode_to_string(demo_mode));
@@ -868,61 +584,61 @@ void *demo_thread(void *runtime_state_ptr) {
 
       demo_enabled = false;
     }
-
+*/
     if (demo_enabled) {
-      if (buffer_size != channel_count) {
-        if (buffer != NULL)
-          free(buffer);
-        buffer = malloc(buffer_size = channel_count);
-        memset(buffer, 0, buffer_size);
-      }
 
-      for (uint32_t strip = 0, data_index = 0; strip < LEDSCAPE_NUM_STRIPS;
+      for (uint32_t strip = 0, pixel_index = 0; strip < LEDSCAPE_NUM_STRIPS;
            strip++) {
-        for (uint16_t p = 0; p < leds_per_strip; p++, data_index += 3) {
+        for (uint16_t p = 0; p < render_state->leds_per_strip;
+             p++, pixel_index++) {
           switch (demo_mode) {
           case DEMO_MODE_NONE: {
-            buffer[data_index] = buffer[data_index + 1] =
-                buffer[data_index + 2] = 0;
+            buffer[pixel_index].r = buffer[pixel_index].g =
+                buffer[pixel_index].b = 0;
           } break;
 
           case DEMO_MODE_IDENTIFY: {
             // Set the pixel to the strip index unless the pixel has the same
             // index as the strip, then light it up grey with bit value: 1010
             // 1010
-            buffer[data_index] = buffer[data_index + 1] =
-                buffer[data_index + 2] = (uint8_t)((strip == p) ? 170 : strip);
+            buffer[pixel_index].r = buffer[pixel_index].g =
+                buffer[pixel_index].b = (uint8_t)((strip == p) ? 170 : p);
           } break;
 
           case DEMO_MODE_FADE: {
             int baseBrightness = 196;
             int brightnessChange = 128;
+            uint8_t rgb[3];
             HSBtoRGB(
-                ((frame_index + ((p + strip * leds_per_strip) * 360) /
-                                    (leds_per_strip * 10)) %
+                ((frame_index +
+                  ((p + strip * render_state->leds_per_strip) * 360) /
+                      (render_state->leds_per_strip * 10)) %
                  360),
                 255,
                 baseBrightness -
                     (((frame_index / 10) +
-                      (p * brightnessChange) / leds_per_strip + strip * 10) %
+                      (p * brightnessChange) / render_state->leds_per_strip + strip * 10) %
                      brightnessChange),
-                &buffer[data_index]);
+                rgb);
+            buffer[pixel_index].r = rgb[0];
+            buffer[pixel_index].g = rgb[1];
+            buffer[pixel_index].b = rgb[2];
           } break;
 
           case DEMO_MODE_BLACK: {
-            buffer[data_index] = buffer[data_index + 1] =
-                buffer[data_index + 2] = 0;
+            buffer[pixel_index].r = buffer[pixel_index].g =
+                buffer[pixel_index].b = 0;
           } break;
 
           case DEMO_MODE_POWER: {
-            buffer[data_index] = buffer[data_index + 1] =
-                buffer[data_index + 2] = 0xff;
+            buffer[pixel_index].r = buffer[pixel_index].g =
+                buffer[pixel_index].b = 0xff;
           } break;
           }
         }
+        set_strip_data(render_state, strip, buffer,
+                       render_state->leds_per_strip);
       }
-
-      set_next_frame_data(render_state, buffer, buffer_size, false);
     }
 
     usleep(1e6 / 30);
@@ -998,6 +714,8 @@ int join_multicast_group_on_all_ifaces(const int sock_fd,
 }
 
 void *e131_server_thread(void *runtime_state_ptr) {
+  runtime_state_ptr = runtime_state_ptr;
+#if 0
   runtime_state_t *runtime_state = (runtime_state_t *)runtime_state_ptr;
   server_config_t *server_config = &runtime_state->server_config;
   render_state_t *render_state = &runtime_state->render_state;
@@ -1118,7 +836,7 @@ void *e131_server_thread(void *runtime_state_ptr) {
         usleep(1e3 /* 1ms */);
     }
   }
-
+#endif
   pthread_exit(NULL);
 }
 
@@ -1127,6 +845,8 @@ void *e131_server_thread(void *runtime_state_ptr) {
 //
 
 void *udp_server_thread(void *runtime_state_ptr) {
+runtime_state_ptr = runtime_state_ptr;
+#if 0
   runtime_state_t *runtime_state = (runtime_state_t *)runtime_state_ptr;
   server_config_t *server_config = &runtime_state->server_config;
   render_state_t *render_state = &runtime_state->render_state;
@@ -1213,11 +933,13 @@ void *udp_server_thread(void *runtime_state_ptr) {
     }
   }
 
+#endif
   pthread_exit(NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TCP Server
+#if 0
 static void event_handler(struct mg_connection *conn, int ev,
                           void *runtime_state_ptr) {
   runtime_state_t *runtime_state = (runtime_state_t *)runtime_state_ptr;
@@ -1284,8 +1006,11 @@ static void event_handler(struct mg_connection *conn, int ev,
     break; // We ignore all other events
   }
 }
+#endif
 
 void *tcp_server_thread(void *runtime_state_ptr) {
+runtime_state_ptr = runtime_state_ptr;
+#if 0
   runtime_state_t *runtime_state = (runtime_state_t *)runtime_state_ptr;
   server_config_t *server_config = &runtime_state->server_config;
 
@@ -1320,6 +1045,7 @@ void *tcp_server_thread(void *runtime_state_ptr) {
     mg_mgr_poll(&mgr, 1000);
   }
   mg_mgr_free(&mgr);
+#endif
   pthread_exit(NULL);
 }
 

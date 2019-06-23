@@ -64,14 +64,14 @@ typedef struct ws281x_command {
 } __attribute__((__packed__)) ws281x_command_t;
 
 ledscape_pixel_t *ledscape_strip(ledscape_t *const leds, int strip) {
-  return leds->frame + strip * leds->pixels_per_strip;
+  return leds->frame + strip * leds->leds_per_strip;
 }
 
 void ledscape_strip_set_color(ledscape_t *leds, int strip_index,
                               color_channel_order_t color_channel_order,
                               uint8_t *buffer, size_t num_pixels) {
-  if (num_pixels > leds->pixels_per_strip) {
-    num_pixels = leds->pixels_per_strip;
+  if (num_pixels > leds->leds_per_strip) {
+    num_pixels = leds->leds_per_strip;
   }
   ledscape_pixel_t *strip = ledscape_strip(leds, strip_index);
   for (size_t i = 0; i < num_pixels; i++) {
@@ -83,13 +83,30 @@ void ledscape_strip_set_color(ledscape_t *leds, int strip_index,
   }
 }
 
+void ledscape_set_rgba_data(ledscape_t *leds,
+                            color_channel_order_t color_channel_order,
+                            uint8_t *buffer, size_t num_leds) {
+  if (num_leds > leds->leds_per_strip) {
+    num_leds = leds->leds_per_strip;
+  }
+  ledscape_pixel_t *strip = leds->frame;
+  // TODO(gsasha): unroll this, if rgb is not translated, it's just memcpy.
+  for (size_t i = 0; i < num_leds; i++) {
+    ledscape_pixel_set_color(strip, color_channel_order,
+                             /* r= */ buffer[0], /* g= */ buffer[1],
+                             /* b= */ buffer[2]);
+    strip++;
+    buffer += 4;
+  }
+}
+
 void ledscape_copy_frame_to_pru(ledscape_t *leds) {
   int32_t *ddr = (int32_t *)leds->pru0->ddr;
   for (size_t strip_index = 0; strip_index < LEDSCAPE_NUM_STRIPS;
        strip_index++) {
     int32_t *strip =
-        (int32_t *)leds->frame + strip_index * leds->pixels_per_strip;
-    for (size_t pixel = 0; pixel < leds->pixels_per_strip; pixel++) {
+        (int32_t *)leds->frame + strip_index * leds->leds_per_strip;
+    for (size_t pixel = 0; pixel < leds->leds_per_strip; pixel++) {
       ddr[pixel * LEDSCAPE_NUM_STRIPS + strip_index] = strip[pixel];
       //fprintf(stderr, "%d:%d - %x\n", strip_index, pixel, strip[pixel]);
     }
@@ -140,13 +157,13 @@ ledscape_t *ledscape_init(unsigned num_pixels) {
       "pru/bin/ws281x-original-ledscape-pru1.bin");
 }
 
-ledscape_t *ledscape_init_with_programs(unsigned pixels_per_strip,
+ledscape_t *ledscape_init_with_programs(unsigned leds_per_strip,
                                         const char *pru0_program_filename,
                                         const char *pru1_program_filename) {
   pru_t *const pru0 = pru_init(0);
   pru_t *const pru1 = pru_init(1);
 
-  const size_t frame_size = pixels_per_strip * LEDSCAPE_NUM_STRIPS * 4;
+  const size_t frame_size = leds_per_strip * LEDSCAPE_NUM_STRIPS * 4;
 
   if (2 * frame_size > pru0->ddr_size) {
     die("Pixel data needs at least 2 * %zu, only %zu in DDR\n", frame_size,
@@ -160,8 +177,7 @@ ledscape_t *ledscape_init_with_programs(unsigned pixels_per_strip,
 
   *leds = (ledscape_t){.pru0 = pru0,
                        .pru1 = pru1,
-                       .pixels_per_strip = pixels_per_strip,
-                       .frame_size = frame_size,
+                       .leds_per_strip = leds_per_strip,
                        .pru0_program_filename = pru0_program_filename,
                        .pru1_program_filename = pru1_program_filename,
                        .frame = frame,
@@ -172,7 +188,7 @@ ledscape_t *ledscape_init_with_programs(unsigned pixels_per_strip,
       .pixels_dma = 0, // will be set in draw routine
       .command = 0,
       .response = 0,
-      .num_pixels = leds->pixels_per_strip,
+      .num_pixels = leds->leds_per_strip,
   };
 
   // Configure all of our output pins.

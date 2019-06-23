@@ -51,8 +51,8 @@ typedef struct {
 	pru_t * pru1;
 	const char* pru0_program_filename;
 	const char* pru1_program_filename;
-	size_t pixels_per_strip;
-	size_t frame_size;
+	size_t leds_per_strip;
+	size_t num_leds;
         // Frame contains the pixel data in per-strip order.
         ledscape_pixel_t* frame;
 } ledscape_t;

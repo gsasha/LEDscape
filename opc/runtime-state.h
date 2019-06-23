@@ -9,9 +9,6 @@
 typedef struct {
   server_config_t server_config;
   render_state_t render_state;
-
-  ledscape_t *leds;
-
 } runtime_state_t;
 
 void setup_runtime_state(runtime_state_t *runtime_state);
