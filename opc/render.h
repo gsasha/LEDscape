@@ -33,7 +33,7 @@ typedef struct {
   uint8_t lut_lookup_blue[257];
   bool lut_enabled;
  
-  struct rate_data rate_data;
+  struct rate_data_t rate_data;
 } render_state_t;
 
 void init_render_state(render_state_t *render_state,

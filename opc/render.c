@@ -4,8 +4,6 @@
 #include <malloc.h>
 #include <stdbool.h>
 #include <string.h>
-#include <sys/time.h>
-#include <unistd.h>
 
 #include "opc/color.h"
 #include "opc/server-pru.h"
@@ -75,32 +73,7 @@ void init_render_state(render_state_t *render_state,
   render_state->frame_data = malloc(led_count * sizeof(buffer_pixel_t));
   render_state->backing_data = malloc(led_count * sizeof(buffer_pixel_t));
 
-  rate_data_init(&render_state->rate_data, 5);
-}
-
-void timeval_add(struct timeval *dst, struct timeval *added) {
-  dst->tv_usec += added->tv_usec;
-  if (dst->tv_usec > 1000000) {
-    dst->tv_usec -= 1000000;
-    dst->tv_sec++;
-  }
-  dst->tv_sec += added->tv_sec;
-}
-
-// return true if a<b.
-int timeval_lt(struct timeval *a, struct timeval *b) {
-  if (a->tv_sec < b->tv_sec) {
-    return true;
-  }
-  if (a->tv_sec > b->tv_sec) {
-    return false;
-  }
-  return a->tv_usec < b->tv_usec;
-}
-
-// return microseconds of b-a;
-int timeval_microseconds_until(struct timeval *a, struct timeval *b) {
-  return (b->tv_sec - a->tv_sec) * 1000000 + b->tv_usec - a->tv_usec;
+  init_rate_data(&render_state->rate_data, 5);
 }
 
 void set_strip_data(render_state_t *render_state, int strip,
@@ -137,23 +110,13 @@ void render_backing_data(render_state_t* render_state) {
 }
 
 void render_thread_run(render_state_t *render_state) {
-  struct timeval frame_tv;
-  gettimeofday(&frame_tv, NULL);
-  struct timeval step_frame_tv;
-  step_frame_tv.tv_sec = 0;
-  step_frame_tv.tv_usec = 1000000 / 60;
+  struct rate_scheduler_t rate_scheduler;
+  init_rate_scheduler(&rate_scheduler, 60);
 
   fprintf(stderr, "Starting render thread\n");
-  for (int frame=0;;frame++) {
-   // fprintf(stderr, "Frame %d\n", frame);
-    timeval_add(&frame_tv, &step_frame_tv);
-
-    struct timeval current_time_tv;
-    gettimeofday(&current_time_tv, NULL);
-
-    if (timeval_lt(&current_time_tv, &frame_tv)) {
-      usleep(timeval_microseconds_until(&current_time_tv, &frame_tv));
-    }
+  for (int frame = 0;; frame++) {
+    // fprintf(stderr, "Frame %d\n", frame);
+    rate_scheduler_wait_frame(&rate_scheduler);
 
     pthread_mutex_lock(&render_state->frame_data_mutex);
     memcpy(render_state->backing_data, render_state->frame_data,
