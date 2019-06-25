@@ -1,5 +1,5 @@
 #define __USE_BSD
-#include "opc/render-state.h"
+#include "opc/render.h"
 
 #include <malloc.h>
 #include <stdbool.h>

@@ -1,5 +1,5 @@
-#ifndef LEDSCAPE_OPC_FRAME_STATE_H
-#define LEDSCAPE_OPC_FRAME_STATE_H
+#ifndef LEDSCAPE_OPC_RENDER_H
+#define LEDSCAPE_OPC_RENDER_H
 
 #include <pthread.h>
 #include <stdint.h>
@@ -44,4 +44,4 @@ void set_strip_data(render_state_t *render_state, int strip,
 
 void *render_thread(void *render_state);
 
-#endif // LEDSCAPE_OPC_FRAME_STATE_H
+#endif // LEDSCAPE_OPC_RENDER_H

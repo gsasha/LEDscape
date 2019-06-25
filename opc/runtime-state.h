@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "opc/render-state.h"
+#include "opc/render.h"
 #include "opc/server-config.h"
 
 typedef struct {
