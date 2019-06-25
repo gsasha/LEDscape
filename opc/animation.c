@@ -17,6 +17,8 @@ void init_animation_state(animation_state_t *animation_state,
                           render_state_t* render_state) {
   animation_state->server_config = server_config;
   animation_state->render_state = render_state;
+
+  init_rate_data(&animation_state->rate_data, 60);
 }
 
 void* animation_thread(void* animation_state_ptr) {
@@ -26,7 +28,12 @@ void* animation_thread(void* animation_state_ptr) {
   struct timeval now;
   gettimeofday(&now, NULL);
 
+  struct rate_scheduler_t rate_scheduler;
+  init_rate_scheduler(&rate_scheduler, 60);
+
   for (;;) {
+    rate_scheduler_wait_frame(&rate_scheduler);
+
     // TODO(gsasha): add thread cancellation?
     for (int strip_index = 0; strip_index < num_strips; strip_index++) {
       strip_animation_state_t *strip = &animation_state->strip[strip_index];
@@ -37,6 +44,14 @@ void* animation_thread(void* animation_state_ptr) {
         }
         continue;
       }
+    }
+
+    struct rate_data_t* rate_data = &animation_state->rate_data;
+    if (rate_data_add_event(rate_data)) {
+      printf("[animation] frames %d, rate %lf fps, recent rate %lf fps\n",
+             rate_data_get_total_events(rate_data),
+             rate_data_get_total_rate_per_sec(rate_data),
+             rate_data_get_recent_rate_per_sec(rate_data));
     }
   }
 }

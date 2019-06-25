@@ -126,11 +126,12 @@ void render_thread_run(render_state_t *render_state) {
 
     render_backing_data(render_state);
 
-    if (rate_data_add_event(&render_state->rate_data)) {
+    struct rate_data_t *rate_data = &render_state->rate_data;
+    if (rate_data_add_event(rate_data)) {
       printf("[render] frames %d, rate %lf fps, recent rate %lf fps\n",
-             rate_data_get_total_events(&render_state->rate_data),
-             rate_data_get_total_rate_per_sec(&render_state->rate_data),
-             rate_data_get_recent_rate_per_sec(&render_state->rate_data));
+             rate_data_get_total_events(rate_data),
+             rate_data_get_total_rate_per_sec(rate_data),
+             rate_data_get_recent_rate_per_sec(rate_data));
     }
   }
 }

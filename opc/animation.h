@@ -5,15 +5,15 @@
 #include <sys/time.h>
 
 #include "ledscape/ledscape.h"
-#include "opc/server-config.h"
+#include "opc/rate-data.h"
 #include "opc/render.h"
+#include "opc/server-config.h"
 
 typedef struct {
   int animation_type;
   void* animation_state;
   bool enabled;
   struct timeval enable_time;
-
 } strip_animation_state_t;
 
 typedef struct {
@@ -23,6 +23,8 @@ typedef struct {
   pthread_t thread_handle;
 
   strip_animation_state_t strip[LEDSCAPE_NUM_STRIPS];
+
+  struct rate_data_t rate_data;
 } animation_state_t;
 
 void init_animation_state(animation_state_t *animation_state,
