@@ -11,6 +11,6 @@ typedef struct {
   render_state_t render_state;
 } runtime_state_t;
 
-void setup_runtime_state(runtime_state_t *runtime_state);
+void init_runtime_state(runtime_state_t *runtime_state);
 
 #endif // LEDSCAPE_OPC_RUNTIME_STATE_H

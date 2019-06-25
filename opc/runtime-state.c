@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-void setup_runtime_state(runtime_state_t *runtime_state) {
+void init_runtime_state(runtime_state_t *runtime_state) {
   // This is running before any threads are started so no need to lock.
   printf("Initializing runtime state...");
 

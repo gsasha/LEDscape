@@ -18,6 +18,30 @@
 
 static const int MAX_CONFIG_FILE_LENGTH_BYTES = 1024 * 1024 * 10;
 
+void init_server_config(server_config_t *config) {
+  *config = (server_config_t){.output_mode_name = "ws281x",
+                              .output_mapping_name = "original-ledscape",
+
+                              .demo_mode = DEMO_MODE_FADE,
+                              .demo_mode_per_strip = {DEMO_MODE_NONE},
+
+                              .tcp_port = 7890,
+                              .udp_port = 7890,
+
+                              .e131_port = 5568,
+
+                              .leds_per_strip = 176,
+                              .used_strip_count = LEDSCAPE_NUM_STRIPS,
+                              .color_channel_order = COLOR_ORDER_BRG,
+
+                              .interpolation_enabled = true,
+                              .dithering_enabled = true,
+                              .lut_enabled = true,
+
+                              .white_point = {.9, 1, 1},
+                              .lum_power = 2};
+}
+
 const char *demo_mode_to_string(demo_mode_t mode) {
   switch (mode) {
   case DEMO_MODE_NONE:

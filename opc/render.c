@@ -44,11 +44,23 @@ void init_ledscape(server_config_t *server_config,
 
 void init_render_state(render_state_t *render_state,
                        server_config_t *server_config) {
-  render_state->num_strips_used = server_config->used_strip_count;
-  render_state->leds_per_strip = server_config->leds_per_strip;
-  render_state->num_leds =
-      render_state->leds_per_strip * render_state->num_strips_used;
-  render_state->color_channel_order = server_config->color_channel_order;
+  (*render_state) = (render_state_t){
+      .num_strips_used = server_config->used_strip_count,
+      .leds_per_strip = server_config->leds_per_strip,
+      .num_leds = render_state->leds_per_strip * render_state->num_strips_used,
+      .color_channel_order = server_config->color_channel_order,
+
+      .frame_data_mutex = PTHREAD_MUTEX_INITIALIZER,
+      .frame_data = NULL,
+      .backing_data = NULL,
+
+      .leds = NULL,
+
+      .lut_lookup_red = {0},
+      .lut_lookup_green = {0},
+      .lut_lookup_blue = {0},
+      .lut_enabled = false,
+  };
 
   render_state->lut_enabled = server_config->lut_enabled;
   if (render_state->lut_enabled) {

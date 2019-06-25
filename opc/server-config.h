@@ -44,6 +44,8 @@ typedef struct {
   float lum_power;
 } server_config_t;
 
+void init_server_config(server_config_t* config);
+
 int read_config_file(const char *config_filename, server_config_t *out_config);
 int write_config_file(const char *config_filename, server_config_t *config);
 

@@ -60,48 +60,7 @@ void *demo_thread(void *threadarg);
 
 char g_config_filename[4096] = {0};
 
-static runtime_state_t g_runtime_state = {
-    .server_config = {.output_mode_name = "ws281x",
-                      .output_mapping_name = "original-ledscape",
-
-                      .demo_mode = DEMO_MODE_FADE,
-                      .demo_mode_per_strip = {DEMO_MODE_NONE},
-
-                      .tcp_port = 7890,
-                      .udp_port = 7890,
-
-                      .e131_port = 5568,
-
-                      .leds_per_strip = 176,
-                      .used_strip_count = LEDSCAPE_NUM_STRIPS,
-                      .color_channel_order = COLOR_ORDER_BRG,
-
-                      .interpolation_enabled = true,
-                      .dithering_enabled = true,
-                      .lut_enabled = true,
-
-                      .white_point = {.9, 1, 1},
-                      .lum_power = 2},
-
-    .render_state =
-        {
-            .num_strips_used = 0,
-            .leds_per_strip = 0,
-            .num_leds = 0,
-            .color_channel_order = COLOR_ORDER_BGR,
-
-            .frame_data_mutex = PTHREAD_MUTEX_INITIALIZER,
-            .frame_data = NULL,
-            .backing_data = NULL,
-
-            .leds = NULL,
-
-            .lut_lookup_red = {0},
-            .lut_lookup_green = {0},
-            .lut_lookup_blue = {0},
-            .lut_enabled = false,
-        },
-};
+static runtime_state_t g_runtime_state = {};
 
 // Global thread handles
 typedef struct {
@@ -461,6 +420,8 @@ void validate_server_config_or_die(server_config_t* server_config) {
 int main(int argc, char **argv) {
 
   server_config_t *server_config = &g_runtime_state.server_config;
+  init_server_config(server_config);
+
   handle_args(argc, argv, server_config);
   print_server_config(stderr, server_config);
   validate_server_config_or_die(server_config);
@@ -477,7 +438,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  setup_runtime_state(&g_runtime_state);
+  init_runtime_state(&g_runtime_state);
 
   fprintf(stderr,
           "[main] Starting server on ports (tcp=%d, udp=%d) for %d pixels on "
