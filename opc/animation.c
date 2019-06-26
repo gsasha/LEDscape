@@ -1,15 +1,20 @@
 #include "opc/animation.h"
 
+#include <string.h>
+#include <stdlib.h>
 #include <time.h>
 
 void init_strip_animation_state(
-    strip_animation_state_t *strip_animation_state) {
+    strip_animation_state_t *strip_animation_state,
+    int num_pixels) {
   *strip_animation_state = (strip_animation_state_t){
+      .pixels = malloc(num_pixels * sizeof(buffer_pixel_t)),
       .animation_type = 0,
       .animation_state = NULL,
       .enabled = false,
   };
   gettimeofday(&strip_animation_state->enable_time, NULL);
+  memset(strip_animation_state->pixels, 0, num_pixels * sizeof(buffer_pixel_t));
 }
 
 void init_animation_state(animation_state_t *animation_state,
@@ -39,11 +44,12 @@ void* animation_thread(void* animation_state_ptr) {
       strip_animation_state_t *strip = &animation_state->strip[strip_index];
       if (!strip->enabled) {
         if (timercmp(&strip->enable_time, &now, >)) {
-           // Strip will start executing next time.
+           // Strip will start executing on next round.
            strip->enabled = true;
         }
         continue;
       }
+      // Render this strip.
     }
 
     struct rate_data_t* rate_data = &animation_state->rate_data;
@@ -59,11 +65,6 @@ void* animation_thread(void* animation_state_ptr) {
 void start_animation_thread(animation_state_t* animation_state) {
   pthread_create(&animation_state->thread_handle, NULL, animation_thread,
                  animation_state);
-}
-
-void stop_animation_thread(animation_state_t *animation_state) {
-  animation_state = animation_state;
-  // TODO(gsasha): implement.
 }
 
 void set_animation_mode_all(animation_state_t *animation_state,

@@ -10,6 +10,7 @@
 #include "opc/server-config.h"
 
 typedef struct {
+  buffer_pixel_t* pixels;  
   int animation_type;
   void* animation_state;
   bool enabled;
@@ -32,7 +33,6 @@ void init_animation_state(animation_state_t *animation_state,
                           render_state_t* render_state);
 
 void start_animation_thread(animation_state_t* animation_state);
-void stop_animation_thread(animation_state_t* animation_state);
 
 void set_animation_mode_all(animation_state_t *animation_state,
                             char *animation_mode);
