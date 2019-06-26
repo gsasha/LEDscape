@@ -458,6 +458,9 @@ int main(int argc, char **argv) {
                  &g_runtime_state);
 */
 
+  start_animation_thread(&g_runtime_state.animation_state);
+  join_animation_thread(&g_runtime_state.animation_state);
+/*
   if (server_config->demo_mode != DEMO_MODE_NONE) {
     printf("[main] Demo Mode Enabled\n");
     pthread_create(&g_threads.demo_thread.handle, NULL, demo_thread,
@@ -465,6 +468,7 @@ int main(int argc, char **argv) {
   } else {
     printf("[main] Demo Mode Disabled\n");
   }
+*/
 
   fprintf(stderr, "Waiting for demo thread to exit\n");
   pthread_join(g_threads.demo_thread.handle, NULL);

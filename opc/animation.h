@@ -33,6 +33,7 @@ void init_animation_state(animation_state_t *animation_state,
                           render_state_t* render_state);
 
 void start_animation_thread(animation_state_t* animation_state);
+void join_animation_thread(animation_state_t* animation_state);
 
 void set_animation_mode_all(animation_state_t *animation_state,
                             char *animation_mode);

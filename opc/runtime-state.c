@@ -8,5 +8,8 @@ void init_runtime_state(runtime_state_t *runtime_state) {
 
   init_render_state(&runtime_state->render_state,
                     &runtime_state->server_config);
+  init_animation_state(&runtime_state->animation_state,
+                       &runtime_state->server_config,
+                       &runtime_state->render_state);
 }
 

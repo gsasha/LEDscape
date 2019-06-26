@@ -30,6 +30,8 @@ void* animation_thread(void* animation_state_ptr) {
   animation_state_t *animation_state = (animation_state_t *)animation_state_ptr;
 
   int num_strips = animation_state->server_config->used_strip_count;
+  int strip_num_pixels = animation_state->server_config->leds_per_strip;
+
   struct timeval now;
   gettimeofday(&now, NULL);
 
@@ -50,6 +52,11 @@ void* animation_thread(void* animation_state_ptr) {
         continue;
       }
       // Render this strip.
+      if (strip_index % 2 == 1) {
+        memset(strip->pixels, 0xff, strip_num_pixels * sizeof(buffer_pixel_t));
+      }
+      set_strip_data(animation_state->render_state, strip_index, strip->pixels,
+                     strip_num_pixels);
     }
 
     struct rate_data_t* rate_data = &animation_state->rate_data;
@@ -65,6 +72,10 @@ void* animation_thread(void* animation_state_ptr) {
 void start_animation_thread(animation_state_t* animation_state) {
   pthread_create(&animation_state->thread_handle, NULL, animation_thread,
                  animation_state);
+}
+
+void join_animation_thread(animation_state_t* animation_state) {
+  pthread_join(animation_state->thread_handle, NULL);
 }
 
 void set_animation_mode_all(animation_state_t *animation_state,
