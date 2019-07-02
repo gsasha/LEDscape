@@ -38,8 +38,8 @@ public:
   void JoinThread();
 
   void Thread();
-private:
 
+private:
   server_config_t *server_config;
   render_state_t *render_state;
 
