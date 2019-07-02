@@ -9,6 +9,10 @@
 #include "opc/rate-data.h"
 #include "opc/server-config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   uint8_t r;
   uint8_t g;
@@ -43,5 +47,9 @@ void set_strip_data(render_state_t *render_state, int strip,
                     buffer_pixel_t *strip_data, int strip_num_pixels);
 
 void *render_thread(void *render_state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LEDSCAPE_OPC_RENDER_H

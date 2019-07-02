@@ -5,6 +5,10 @@
 #include <sys/time.h>
 #include <time.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct rate_scheduler_t {
   struct timeval frame_tv;
   struct timeval step_frame_tv;
@@ -30,5 +34,9 @@ bool rate_data_add_event(struct rate_data_t*);
 int rate_data_get_total_events(struct rate_data_t*);
 double rate_data_get_total_rate_per_sec(struct rate_data_t*);
 double rate_data_get_recent_rate_per_sec(struct rate_data_t*);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LEDSCAPE_OPC_RATE_DATA_H

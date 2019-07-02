@@ -11,6 +11,10 @@
 #include <stdint.h>
 #include "pru.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** The number of strips supported.
  *
  * Changing this also requires changes in ws281x.p to stride the
@@ -151,5 +155,9 @@ const char *
 color_channel_order_to_string(color_channel_order_t color_channel_order);
 
 color_channel_order_t color_channel_order_from_string(const char *str);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

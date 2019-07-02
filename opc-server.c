@@ -458,8 +458,8 @@ int main(int argc, char **argv) {
                  &g_runtime_state);
 */
 
-  start_animation_thread(&g_runtime_state.animation_state);
-  join_animation_thread(&g_runtime_state.animation_state);
+  start_animation_thread(g_runtime_state.animation_state);
+  join_animation_thread(g_runtime_state.animation_state);
 /*
   if (server_config->demo_mode != DEMO_MODE_NONE) {
     printf("[main] Demo Mode Enabled\n");

@@ -7,6 +7,7 @@ TARGETS += opc-server
 LEDSCAPE_OBJS = ledscape/ledscape.o pru.o util.o\
  opc/animation.o opc/color.o opc/render.o opc/runtime-state.o\
  opc/rate-data.o\
+ opc/effect.o\
  opc/server-config.o opc/server-error.o opc/server-pru.o\
  lib/cesanta/mongoose.o lib/cesanta/frozen.o
 LEDSCAPE_LIB := libledscape.a
@@ -31,8 +32,7 @@ export CROSS_COMPILE?=arm-linux-gnueabi-
 endif
 
 # TODO(gsasha): find out how to deal without -D_BSD_SOURCE
-CFLAGS += \
-	-std=c99 \
+CFLAGS_BASE += \
 	-W \
 	-Wall \
 	-D_DEFAULT_SOURCE \
@@ -50,14 +50,22 @@ CFLAGS += \
 	-Werror \
 	-Wno-unknown-pragmas
 
+CFLAGS += \
+	-std=c99 \
+        $(CFLAGS_BASE)
+
+CCFLAGS += \
+	$(CFLAGS_BASE)
+
 LDFLAGS += \
 
 LDLIBS += \
 	-lpthread \
 
 COMPILE.o = $(CROSS_COMPILE)gcc $(CFLAGS) -c -o $@ $<
+COMPILECC.o = $(CROSS_COMPILE)g++ $(CCFLAGS) -c -o $@ $<
 COMPILE.a = $(CROSS_COMPILE)ar crv $@ $^
-COMPILE.link = $(CROSS_COMPILE)gcc $(LDFLAGS) -o $@ $^ $(LDLIBS)
+COMPILE.link = $(CROSS_COMPILE)g++ $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 
 #####
@@ -68,6 +76,7 @@ COMPILE.link = $(CROSS_COMPILE)gcc $(LDFLAGS) -o $@ $^ $(LDLIBS)
 APP_LOADER_DIR ?= ./am335x/app_loader
 APP_LOADER_LIB := $(APP_LOADER_DIR)/lib/libprussdrv.a
 CFLAGS += -I$(APP_LOADER_DIR)/include
+CCFLAGS += -I$(APP_LOADER_DIR)/include
 LDLIBS += $(APP_LOADER_LIB) -lm
 
 #####
@@ -95,6 +104,9 @@ all_pru_templates: $(EXPANDED_PRU_TEMPLATES)
 	cd `dirname $@` && gcc -E - < $(notdir $<) | perl -p -e 's/^#.*//; s/;/\n/g; s/BYTE\((\d+)\)/t\1/g' > $(notdir $<).i
 	$(PASM) -V3 -b $<.i pru/bin/$(notdir $(basename $@))
 	#$(RM) $<.i
+
+%.o: %.cc
+	$(COMPILECC.o)
 
 %.o: %.c
 	$(COMPILE.o)
