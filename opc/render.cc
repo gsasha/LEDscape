@@ -7,12 +7,49 @@
 #include "opc/color.h"
 #include "opc/server-pru.h"
 
+RenderState::RenderState(const server_config_t &server_config)
+    : used_strip_count(server_config.used_strip_count),
+      leds_per_strip(server_config.leds_per_strip),
+      num_leds(leds_per_strip * used_strip_count),
+      color_channel_order(server_config.color_channel_order),
+      frame_data_mutex(PTHREAD_MUTEX_INITIALIZER), frame_data(nullptr),
+      backing_data(nullptr), lut_enabled(server_config.lut_enabled),
+      rate_data(5) {
+
+  if (lut_enabled) {
+    BuildLookupTables(server_config);
+  }
+
+  InitLedscape(server_config);
+
+  uint32_t led_count = (uint32_t)(leds_per_strip)*LEDSCAPE_NUM_STRIPS;
+
+  frame_data =
+      static_cast<buffer_pixel_t *>(malloc(led_count * sizeof(buffer_pixel_t)));
+  backing_data =
+      static_cast<buffer_pixel_t *>(malloc(led_count * sizeof(buffer_pixel_t)));
+}
+
+void RenderState::StartThread() {
+  pthread_create(&thread_handle, NULL, &RenderState::ThreadFunc, this);
+}
+
+void RenderState::JoinThread() { pthread_join(thread_handle, NULL); }
+
+void RenderState::SetStripData(int strip, buffer_pixel_t *strip_data,
+                               int strip_num_leds) {
+  strip = strip;
+  strip_data = strip_data, strip_num_leds = strip_num_leds;
+  pthread_mutex_lock(&frame_data_mutex);
+  buffer_pixel_t *frame_strip_data = frame_data + strip * leds_per_strip;
+  memcpy(frame_strip_data, strip_data, strip_num_leds * sizeof(buffer_pixel_t));
+  pthread_mutex_unlock(&frame_data_mutex);
+}
+
 void *RenderState::ThreadFunc(void *render_state) {
   static_cast<RenderState *>(render_state)->Thread();
   return nullptr;
 }
-
-void RenderState::JoinThread() { pthread_join(thread_handle, NULL); }
 
 void RenderState::Thread() {
   RateScheduler rate_scheduler(60);
@@ -35,10 +72,6 @@ void RenderState::Thread() {
              rate_data.GetRecentRatePerSec());
     }
   }
-}
-
-void RenderState::StartThread() {
-  pthread_create(&thread_handle, NULL, &RenderState::ThreadFunc, this);
 }
 
 void RenderState::BuildLookupTables(const server_config_t &server_config) {
@@ -67,39 +100,6 @@ void RenderState::InitLedscape(const server_config_t &server_config) {
   leds =
       ledscape_init_with_programs(server_config.leds_per_strip,
                                   pru0_filename.c_str(), pru1_filename.c_str());
-}
-
-RenderState::RenderState(const server_config_t &server_config)
-    : used_strip_count(server_config.used_strip_count),
-      leds_per_strip(server_config.leds_per_strip),
-      num_leds(leds_per_strip * used_strip_count),
-      color_channel_order(server_config.color_channel_order),
-      frame_data_mutex(PTHREAD_MUTEX_INITIALIZER), frame_data(nullptr),
-      backing_data(nullptr), lut_enabled(server_config.lut_enabled),
-      rate_data(5) {
-
-  if (lut_enabled) {
-    BuildLookupTables(server_config);
-  }
-
-  InitLedscape(server_config);
-
-  uint32_t led_count = (uint32_t)(leds_per_strip)*LEDSCAPE_NUM_STRIPS;
-
-  frame_data =
-      static_cast<buffer_pixel_t *>(malloc(led_count * sizeof(buffer_pixel_t)));
-  backing_data =
-      static_cast<buffer_pixel_t *>(malloc(led_count * sizeof(buffer_pixel_t)));
-}
-
-void RenderState::SetStripData(int strip, buffer_pixel_t *strip_data,
-                               int strip_num_leds) {
-  strip = strip;
-  strip_data = strip_data, strip_num_leds = strip_num_leds;
-  pthread_mutex_lock(&frame_data_mutex);
-  buffer_pixel_t *frame_strip_data = frame_data + strip * leds_per_strip;
-  memcpy(frame_strip_data, strip_data, strip_num_leds * sizeof(buffer_pixel_t));
-  pthread_mutex_unlock(&frame_data_mutex);
 }
 
 void RenderState::RenderBackingData() {

@@ -26,15 +26,13 @@ public:
   void SetStripData(int strip, buffer_pixel_t *strip_data,
                     int strip_num_pixels);
 
-
-
 private:
-  void BuildLookupTables(const server_config_t& server_config);
-  void InitLedscape(const server_config_t& server_config);
+  void BuildLookupTables(const server_config_t &server_config);
+  void InitLedscape(const server_config_t &server_config);
   void Thread();
   void RenderBackingData();
 
-  static void* ThreadFunc(void* render_state);
+  static void *ThreadFunc(void *render_state);
 
   int used_strip_count;
   int leds_per_strip;
@@ -46,13 +44,13 @@ private:
   buffer_pixel_t *frame_data;
   buffer_pixel_t *backing_data;
 
-  ledscape_t* leds;
+  ledscape_t *leds;
 
   uint8_t lut_lookup_red[257];
   uint8_t lut_lookup_green[257];
   uint8_t lut_lookup_blue[257];
   bool lut_enabled;
- 
+
   RateData rate_data;
 };
 
