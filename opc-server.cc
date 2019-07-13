@@ -266,7 +266,7 @@ void handle_args(int argc, char **argv, server_config_t *server_config) {
         fprintf(stderr, "Loaded config file from %s.\n",
                 g_config_filename.c_str());
       } else {
-        fprintf(stderr, "Config file not loaded: %s\n", g_error_info_str);
+        fprintf(stderr, "Config file not loaded: %s\n", opc_server_get_error().c_str());
       }
     } break;
 
@@ -432,7 +432,7 @@ int main(int argc, char **argv) {
       fprintf(stderr, "Config file written to %s\n", g_config_filename.c_str());
     } else {
       fprintf(stderr, "Failed to write to config file %s: %s\n",
-              g_config_filename.c_str(), g_error_info_str);
+              g_config_filename.c_str(), opc_server_get_error().c_str());
     }
   }
 

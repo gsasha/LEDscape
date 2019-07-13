@@ -14,9 +14,21 @@ const char *opc_server_strerr(opc_error_code_t error_code) {
     return "No JSON document given";
   case OPC_SERVER_ERR_INVALID_JSON:
     return "Invalid JSON document given";
+  case OPC_SERVER_ERR_FILE_READ_FAILED:
+    return "Failed reading file";
+  case OPC_SERVER_ERR_FILE_WRITE_FAILED:
+    return "Failed writing file";
+  case OPC_SERVER_ERR_FILE_TOO_LARGE:
+    return "File too large";
+  case OPC_SERVER_ERR_SEEK_FAILED:
+    return "Seek failed";
   default:
     return "Unkown Error";
   }
+}
+
+std::string opc_server_get_error() {
+  return g_error_info_str;
 }
 
 int opc_server_set_error_av(opc_error_code_t error_code, const char *extra_info,

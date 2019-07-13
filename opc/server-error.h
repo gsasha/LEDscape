@@ -1,7 +1,7 @@
 #ifndef LEDSCAPE_OPC_SERVER_ERROR_H
 #define LEDSCAPE_OPC_SERVER_ERROR_H
 
-#include <stdio.h>
+#include <string>
 
 // Error Handling
 
@@ -15,12 +15,9 @@ enum opc_error_code_t {
   OPC_SERVER_ERR_SEEK_FAILED
 };
 
-extern __thread opc_error_code_t g_error_code;
-extern __thread char g_error_info_str[4096];
-
-const char *opc_server_strerr(opc_error_code_t error_code);
-
 int opc_server_set_error(opc_error_code_t error_code,
                          const char* extra_info, ...);
+
+std::string opc_server_get_error();
 
 #endif // LEDSCAPE_OPC_SERVER_ERROR_H
