@@ -28,8 +28,8 @@
 
 #include "ledscape/ledscape.h"
 #include "lib/cesanta/mongoose.h"
+#include "opc/animation.h"
 #include "opc/color.h"
-#include "opc/runtime-state.h"
 #include "opc/server-config.h"
 #include "opc/server-error.h"
 #include "opc/server-pru.h"

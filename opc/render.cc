@@ -1,4 +1,3 @@
-#define __USE_BSD
 #include "opc/render.h"
 
 #include <malloc.h>
