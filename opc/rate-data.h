@@ -17,7 +17,8 @@ private:
 };
 
 class RateData {
-  RateData();
+public:
+  RateData(double window_size_seconds);
 
   // returns true if new rates have been computed.
   bool AddEvent();

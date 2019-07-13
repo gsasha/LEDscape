@@ -70,7 +70,6 @@ typedef struct {
 } thread_state_lt;
 
 static struct {
-  thread_state_lt render_thread;
   thread_state_lt tcp_server_thread;
   thread_state_lt udp_server_thread;
   thread_state_lt e131_server_thread;
@@ -447,8 +446,6 @@ int main(int argc, char **argv) {
           server_config->leds_per_strip, LEDSCAPE_NUM_STRIPS);
 
   bzero(&g_threads, sizeof(g_threads));
-  pthread_create(&g_threads.render_thread.handle, NULL, render_thread,
-                 &g_runtime_state.render_state);
 /*
   pthread_create(&g_threads.udp_server_thread.handle, NULL, udp_server_thread,
                  &g_runtime_state);
@@ -512,9 +509,10 @@ typedef enum { OPC_LEDSCAPE_CMD_GET_CONFIG = 1 } opc_ledscape_cmd_id_t;
 //
 
 void *demo_thread(void *runtime_state_ptr) {
+runtime_state_ptr = runtime_state_ptr;
+#if 0
   runtime_state_t *runtime_state = (runtime_state_t *)runtime_state_ptr;
   server_config_t *server_config = &runtime_state->server_config;
-  render_state_t *render_state = &runtime_state->render_state;
   fprintf(stderr, "Starting demo data thread\n");
 
   buffer_pixel_t *buffer = NULL;
@@ -523,7 +521,7 @@ void *demo_thread(void *runtime_state_ptr) {
 //  struct timeval now_tv, delta_tv;
   uint8_t demo_enabled = true;
 
-  buffer = malloc(render_state->leds_per_strip * sizeof(buffer_pixel_t));
+  buffer = malloc(server_config->leds_per_strip * sizeof(buffer_pixel_t));
   memset(buffer, 0, buffer_size);
 
   for (uint16_t frame_index = 0; /*ever*/; frame_index += 3) {
@@ -616,6 +614,7 @@ void *demo_thread(void *runtime_state_ptr) {
 #pragma clang diagnostic pop
 
   fprintf(stderr, "Done demo thread\n");
+#endif
   pthread_exit(NULL);
 }
 

@@ -4,7 +4,6 @@
 #include <pthread.h>
 #include <sys/time.h>
 
-#include "opc/render.h"
 #include "opc/server-config.h"
 
 #ifdef __cplusplus
@@ -14,8 +13,7 @@ extern "C" {
 struct animation_state_t;
 typedef struct animation_state_t animation_state_t;
 
-animation_state_t *create_animation_state(server_config_t *server_config,
-                                          render_state_t *render_state);
+animation_state_t *create_animation_state(server_config_t *server_config);
 
 void start_animation_thread(animation_state_t* animation_state);
 void join_animation_thread(animation_state_t* animation_state);

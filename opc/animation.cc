@@ -7,6 +7,7 @@
 #include "ledscape/ledscape.h"
 #include "opc/effect.h"
 #include "opc/rate-data.h"
+#include "opc/render.h"
 
 class StripAnimationState {
 public:
@@ -25,11 +26,12 @@ public:
 
 class AnimationState {
 public:
-  AnimationState(server_config_t *server_config, render_state_t *render_state)
-      : server_config(server_config), render_state(render_state) {}
+  AnimationState(server_config_t *server_config)
+      : server_config(server_config), 
+render_state_(server_config),
+        rate_data_(60) {}
 
   void Init() {
-    init_rate_data(&rate_data, 60);
     for (int i = 0; i < LEDSCAPE_NUM_STRIPS; i++) {
       strips_[i].Init(server_config->leds_per_strip);
     }
@@ -41,13 +43,13 @@ public:
 
 private:
   server_config_t *server_config;
-  render_state_t *render_state;
+  RenderState render_state_;
 
   pthread_t thread_handle;
 
   StripAnimationState strips_[LEDSCAPE_NUM_STRIPS];
 
-  struct rate_data_t rate_data;
+  RateData rate_data_;
 };
 
 void *animation_thread(void *animation_state_ptr) {
@@ -59,6 +61,7 @@ void *animation_thread(void *animation_state_ptr) {
 
 void AnimationState::StartThread() {
   pthread_create(&thread_handle, NULL, &animation_thread, this);
+  render_state_.StartThread();
 }
 
 void AnimationState::JoinThread() { pthread_join(thread_handle, NULL); }
@@ -70,11 +73,10 @@ void AnimationState::Thread() {
   struct timeval now;
   gettimeofday(&now, NULL);
 
-  struct rate_scheduler_t rate_scheduler;
-  init_rate_scheduler(&rate_scheduler, 60);
+  RateScheduler rate_scheduler(60);
 
   for (;;) {
-    rate_scheduler_wait_frame(&rate_scheduler);
+    rate_scheduler.WaitFrame();
 
     // TODO(gsasha): add thread cancellation?
     for (int strip_index = 0; strip_index < num_strips; strip_index++) {
@@ -90,15 +92,14 @@ void AnimationState::Thread() {
       if (strip_index % 2 == 1) {
         memset(strip->pixels, 0xff, strip_num_pixels * sizeof(buffer_pixel_t));
       }
-      set_strip_data(render_state, strip_index, strip->pixels,
-                     strip_num_pixels);
+      render_state_.SetStripData(strip_index, strip->pixels, strip_num_pixels);
     }
 
-    if (rate_data_add_event(&rate_data)) {
+    if (rate_data_.AddEvent()) {
       printf("[animation] frames %d, rate %lf fps, recent rate %lf fps\n",
-             rate_data_get_total_events(&rate_data),
-             rate_data_get_total_rate_per_sec(&rate_data),
-             rate_data_get_recent_rate_per_sec(&rate_data));
+             rate_data_.GetTotalEvents(),
+             rate_data_.GetTotalRatePerSec(),
+             rate_data_.GetRecentRatePerSec());
     }
   }
 }
@@ -107,13 +108,12 @@ struct animation_state_t {
   AnimationState *impl;
 };
 
-animation_state_t *create_animation_state(server_config_t *server_config,
-                                          render_state_t *render_state) {
+animation_state_t *create_animation_state(server_config_t *server_config) {
   animation_state_t *animation_state =
       (animation_state_t *)malloc(sizeof(animation_state_t));
   memset(animation_state, 0, sizeof(animation_state_t));
 
-  animation_state->impl = new AnimationState(server_config, render_state);
+  animation_state->impl = new AnimationState(server_config);
   animation_state->impl->Init();
 
   return animation_state;

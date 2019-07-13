@@ -69,7 +69,7 @@ bool RateData::AddEvent() {
   if (seconds_since_last_window >= window_size_seconds) {
     double seconds_since_start = seconds_since(&initial_time, &current_time);
     total_rate = total_events / seconds_since_start;
-    int last_window_intervals = data->last_window_events - 1;
+    int last_window_intervals = last_window_events - 1;
     last_window_rate = last_window_intervals / seconds_since_last_window;
 
     last_window_time = current_time;

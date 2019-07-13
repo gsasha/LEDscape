@@ -9,10 +9,6 @@
 #include "opc/rate-data.h"
 #include "opc/server-config.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct {
   uint8_t r;
   uint8_t g;
@@ -20,12 +16,32 @@ typedef struct {
   uint8_t unused;
 } __attribute__((__packed__)) buffer_pixel_t;
 
-typedef struct {
-  int num_strips_used;
+class RenderState {
+public:
+  RenderState(server_config_t* server_config);
+
+  void StartThread();
+  void JoinThread();
+
+  void SetStripData(int strip, buffer_pixel_t *strip_data,
+                    int strip_num_pixels);
+
+
+
+private:
+  void BuildLookupTables(server_config_t* server_config);
+  void InitLedscape(server_config_t* server_config);
+  void Thread();
+  void RenderBackingData();
+
+  static void* ThreadFunc(void* render_state);
+
+  int used_strip_count;
   int leds_per_strip;
   int num_leds;
   color_channel_order_t color_channel_order;
 
+  pthread_t thread_handle;
   pthread_mutex_t frame_data_mutex;
   buffer_pixel_t *frame_data;
   buffer_pixel_t *backing_data;
@@ -37,19 +53,7 @@ typedef struct {
   uint8_t lut_lookup_blue[257];
   bool lut_enabled;
  
-  struct rate_data_t rate_data;
-} render_state_t;
-
-void init_render_state(render_state_t *render_state,
-                       server_config_t *server_config);
-
-void set_strip_data(render_state_t *render_state, int strip,
-                    buffer_pixel_t *strip_data, int strip_num_pixels);
-
-void *render_thread(void *render_state);
-
-#ifdef __cplusplus
-}
-#endif
+  RateData rate_data;
+};
 
 #endif // LEDSCAPE_OPC_RENDER_H
