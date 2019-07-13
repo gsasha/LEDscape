@@ -42,43 +42,41 @@ void RenderState::StartThread() {
   pthread_create(&thread_handle, NULL, &RenderState::ThreadFunc, this);
 }
 
-void RenderState::BuildLookupTables(server_config_t *server_config) {
-  double lum_power = server_config->lum_power;
+void RenderState::BuildLookupTables(const server_config_t &server_config) {
+  double lum_power = server_config.lum_power;
 
-  compute_lookup_table(server_config->white_point.red, lum_power,
+  compute_lookup_table(server_config.white_point.red, lum_power,
                        lut_lookup_red);
-  compute_lookup_table(server_config->white_point.green, lum_power,
+  compute_lookup_table(server_config.white_point.green, lum_power,
                        lut_lookup_green);
-  compute_lookup_table(server_config->white_point.blue, lum_power,
+  compute_lookup_table(server_config.white_point.blue, lum_power,
                        lut_lookup_blue);
 }
 
-void RenderState::InitLedscape(server_config_t *server_config) {
-  char pru0_filename[4096], pru1_filename[4096];
+void RenderState::InitLedscape(const server_config_t &server_config) {
 
-  build_pruN_program_name(server_config->output_mode_name,
-                          server_config->output_mapping_name, 0, pru0_filename,
-                          sizeof(pru0_filename));
-
-  build_pruN_program_name(server_config->output_mode_name,
-                          server_config->output_mapping_name, 1, pru1_filename,
-                          sizeof(pru1_filename));
+  std::string pru0_filename = build_pruN_program_name(
+      server_config.output_mode_name, server_config.output_mapping_name, 0);
+  std::string pru1_filename = build_pruN_program_name(
+      server_config.output_mode_name, server_config.output_mapping_name, 1);
 
   // Init LEDscape
   printf("[main] Starting LEDscape... leds_per_strip %d, pru0_program %s, "
          "pru1_program %s\n",
-         server_config->leds_per_strip, pru0_filename, pru1_filename);
-  leds = ledscape_init_with_programs(server_config->leds_per_strip,
-                                     pru0_filename, pru1_filename);
+         server_config.leds_per_strip, pru0_filename.c_str(),
+         pru1_filename.c_str());
+  leds =
+      ledscape_init_with_programs(server_config.leds_per_strip,
+                                  pru0_filename.c_str(), pru1_filename.c_str());
 }
 
-RenderState::RenderState(server_config_t *server_config)
-    : used_strip_count(server_config->used_strip_count),
-      leds_per_strip(server_config->leds_per_strip),
+RenderState::RenderState(const server_config_t &server_config)
+    : used_strip_count(server_config.used_strip_count),
+      leds_per_strip(server_config.leds_per_strip),
       num_leds(leds_per_strip * used_strip_count),
-      color_channel_order(server_config->color_channel_order),
+      color_channel_order(server_config.color_channel_order),
       frame_data_mutex(PTHREAD_MUTEX_INITIALIZER), frame_data(nullptr),
-      backing_data(nullptr), lut_enabled(server_config->lut_enabled),
+      backing_data(nullptr), lut_enabled(server_config.lut_enabled),
       rate_data(5) {
 
   if (lut_enabled) {

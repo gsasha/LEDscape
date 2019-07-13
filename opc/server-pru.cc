@@ -2,10 +2,14 @@
 
 #include <stdio.h>
 
-void build_pruN_program_name(const char *output_mode_name,
-                             const char *output_mapping_name, uint8_t pruNum,
-                             char *out_pru_filename, int filename_len) {
-  snprintf(out_pru_filename, filename_len, "pru/bin/%s-%s-pru%d.bin",
-           output_mode_name, output_mapping_name, (int)pruNum);
+#include <sstream>
+
+std::string build_pruN_program_name(const std::string &output_mode_name,
+                                    const std::string &output_mapping_name,
+                                    uint8_t pruNum) {
+  std::ostringstream os;
+  os << "pru/bin/" << output_mode_name << "-" << output_mapping_name << "-pru"
+     << pruNum << ".bin";
+  return os.str();
 }
 

@@ -60,10 +60,6 @@ void *demo_thread(void *threadarg);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global Data
 
-std::string g_config_filename;
-
-static runtime_state_t g_runtime_state = {};
-
 // Global thread handles
 typedef struct {
   pthread_t handle;
@@ -166,7 +162,8 @@ void print_usage(char **argv) {
   printf("\n");
 }
 
-void handle_args(int argc, char **argv, server_config_t *server_config) {
+void handle_args(int argc, char **argv, server_config_t *server_config,
+                 std::string *config_file) {
   extern char *optarg;
 
   int opt;
@@ -260,11 +257,11 @@ void handle_args(int argc, char **argv, server_config_t *server_config) {
     } break;
 
     case 'C': {
-      g_config_filename = optarg;
+      *config_file = optarg;
 
-      if (read_config_file(g_config_filename.c_str(), server_config) >= 0) {
+      if (read_config_file(config_file->c_str(), server_config) >= 0) {
         fprintf(stderr, "Loaded config file from %s.\n",
-                g_config_filename.c_str());
+                config_file->c_str());
       } else {
         fprintf(stderr, "Config file not loaded: %s\n", opc_server_get_error().c_str());
       }
@@ -417,32 +414,31 @@ void validate_server_config_or_die(server_config_t* server_config) {
 
 int main(int argc, char **argv) {
 
-  server_config_t *server_config = &g_runtime_state.server_config;
-  init_server_config(server_config);
+  server_config_t server_config;
+  init_server_config(&server_config);
 
-  handle_args(argc, argv, server_config);
-  print_server_config(stderr, server_config);
-  validate_server_config_or_die(server_config);
+  std::string config_file;
+  handle_args(argc, argv, &server_config, &config_file);
+  print_server_config(stderr, &server_config);
+  validate_server_config_or_die(&server_config);
 
   // Save the config file if specified
   // TODO(gsasha): it looks that if config name is given, it is read and
   // then immediately written back. Seriously?
-  if (g_config_filename.size() > 0) {
-    if (write_config_file(g_config_filename.c_str(), server_config) >= 0) {
-      fprintf(stderr, "Config file written to %s\n", g_config_filename.c_str());
+  if (config_file.size() > 0) {
+    if (write_config_file(config_file.c_str(), &server_config) >= 0) {
+      fprintf(stderr, "Config file written to %s\n", config_file.c_str());
     } else {
       fprintf(stderr, "Failed to write to config file %s: %s\n",
-              g_config_filename.c_str(), opc_server_get_error().c_str());
+              config_file.c_str(), opc_server_get_error().c_str());
     }
   }
-
-  init_runtime_state(&g_runtime_state);
 
   fprintf(stderr,
           "[main] Starting server on ports (tcp=%d, udp=%d) for %d pixels on "
           "%d strips\n",
-          server_config->tcp_port, server_config->udp_port,
-          server_config->leds_per_strip, LEDSCAPE_NUM_STRIPS);
+          server_config.tcp_port, server_config.udp_port,
+          server_config.leds_per_strip, LEDSCAPE_NUM_STRIPS);
 
   bzero(&g_threads, sizeof(g_threads));
 /*
@@ -454,8 +450,9 @@ int main(int argc, char **argv) {
                  &g_runtime_state);
 */
 
-  start_animation_thread(g_runtime_state.animation_state);
-  join_animation_thread(g_runtime_state.animation_state);
+  Animation animation(server_config);
+  animation.StartThread();
+  animation.JoinThread();
 /*
   if (server_config->demo_mode != DEMO_MODE_NONE) {
     printf("[main] Demo Mode Enabled\n");

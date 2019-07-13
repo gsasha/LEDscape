@@ -5,7 +5,7 @@
 TARGETS += opc-server
 
 LEDSCAPE_OBJS = ledscape/ledscape.o pru.o util.o\
- opc/animation.o opc/color.o opc/render.o opc/runtime-state.o\
+ opc/animation.o opc/color.o opc/render.o\
  opc/rate-data.o\
  opc/effect.o\
  opc/server-config.o opc/server-error.o opc/server-pru.o\

@@ -17,7 +17,7 @@ typedef enum {
   DEMO_MODE_POWER = 4
 } demo_mode_t;
 
-typedef struct {
+struct server_config_t {
   std::string output_mode_name;
   std::string output_mapping_name;
 
@@ -44,7 +44,7 @@ typedef struct {
   } white_point;
 
   float lum_power;
-} server_config_t;
+};
 
 void init_server_config(server_config_t* config);
 

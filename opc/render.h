@@ -18,7 +18,7 @@ typedef struct {
 
 class RenderState {
 public:
-  RenderState(server_config_t* server_config);
+  RenderState(const server_config_t &server_config);
 
   void StartThread();
   void JoinThread();
@@ -29,8 +29,8 @@ public:
 
 
 private:
-  void BuildLookupTables(server_config_t* server_config);
-  void InitLedscape(server_config_t* server_config);
+  void BuildLookupTables(const server_config_t& server_config);
+  void InitLedscape(const server_config_t& server_config);
   void Thread();
   void RenderBackingData();
 

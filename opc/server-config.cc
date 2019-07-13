@@ -395,16 +395,15 @@ int Validator::Validate(const server_config_t *input_config,
                         std::string *diagnostic_str) {
 
   { // outputMode and outputMapping
-    char path_temp[4096];
     for (int pruNum = 0; pruNum < 2; pruNum++) {
-      build_pruN_program_name(input_config->output_mode_name.c_str(),
-                              input_config->output_mapping_name.c_str(), pruNum,
-                              path_temp, sizeof(path_temp));
+      std::string pru_file = build_pruN_program_name(
+          input_config->output_mode_name.c_str(),
+          input_config->output_mapping_name.c_str(), pruNum);
 
-      if (access(path_temp, R_OK) == -1) {
+      if (access(pru_file.c_str(), R_OK) == -1) {
         std::ostringstream os;
         os << "Invalid mapping and/or mode name; cannot access PRU " << pruNum
-           << " program '" << path_temp << "'";
+           << " program '" << pru_file.c_str() << "'";
         AddError(os.str());
       }
     }
