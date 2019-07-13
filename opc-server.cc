@@ -24,6 +24,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <string>
+
 #include "ledscape/ledscape.h"
 #include "lib/cesanta/mongoose.h"
 #include "opc/color.h"
@@ -58,7 +60,7 @@ void *demo_thread(void *threadarg);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global Data
 
-char g_config_filename[4096] = {0};
+std::string g_config_filename;
 
 static runtime_state_t g_runtime_state = {};
 
@@ -117,29 +119,29 @@ static struct option long_options[] = {
 void set_pru_mode_and_mapping_from_legacy_output_mode_name(
     server_config_t *server_config, const char *input) {
   if (strcasecmp(input, "NOP") == 0) {
-    strcpy(server_config->output_mode_name, "nop");
-    strcpy(server_config->output_mapping_name, "original-ledscape");
+    server_config->output_mode_name == "nop";
+    server_config->output_mapping_name = "original-ledscape";
   } else if (strcasecmp(input, "DMX") == 0) {
-    strcpy(server_config->output_mode_name, "dmx");
-    strcpy(server_config->output_mapping_name, "original-ledscape");
+    server_config->output_mode_name = "dmx";
+    server_config->output_mapping_name = "original-ledscape";
   } else if (strcasecmp(input, "WS2801") == 0) {
-    strcpy(server_config->output_mode_name, "ws2801");
-    strcpy(server_config->output_mapping_name, "original-ledscape");
+    server_config->output_mode_name = "ws2801";
+    server_config->output_mapping_name = "original-ledscape";
   } else if (strcasecmp(input, "WS2801_NEWPINS") == 0) {
-    strcpy(server_config->output_mode_name, "ws2801");
-    strcpy(server_config->output_mapping_name, "rgb-123-v2");
+    server_config->output_mode_name = "ws2801";
+    server_config->output_mapping_name = "rgb-123-v2";
   } else /*if (strcasecmp(input, "WS281x") == 0)*/ {
     // The default case is to use ws281x
-    strcpy(server_config->output_mode_name, "ws281x");
-    strcpy(server_config->output_mapping_name, "original-ledscape");
+    server_config->output_mode_name = "ws281x";
+    server_config->output_mapping_name = "original-ledscape";
   }
 
   fprintf(stderr,
           "WARNING: PRU mode set using legacy -0 or -1 flags; please update to "
           "use --mode and --mapping.\n"
           "   '%s' interpreted as mode '%s' and mapping '%s'\n",
-          input, server_config->output_mode_name,
-          server_config->output_mapping_name);
+          input, server_config->output_mode_name.c_str(),
+          server_config->output_mapping_name.c_str());
 }
 
 void print_usage(char **argv) {
@@ -250,20 +252,19 @@ void handle_args(int argc, char **argv, server_config_t *server_config) {
     } break;
 
     case 'm': {
-      strlcpy(server_config->output_mode_name, optarg,
-              sizeof(server_config->output_mode_name));
+      server_config->output_mode_name = optarg;
     } break;
 
     case 'M': {
-      strlcpy(server_config->output_mapping_name, optarg,
-              sizeof(server_config->output_mapping_name));
+      server_config->output_mapping_name = optarg;
     } break;
 
     case 'C': {
-      strlcpy(g_config_filename, optarg, sizeof(g_config_filename));
+      g_config_filename = optarg;
 
-      if (read_config_file(g_config_filename, server_config) >= 0) {
-        fprintf(stderr, "Loaded config file from %s.\n", g_config_filename);
+      if (read_config_file(g_config_filename.c_str(), server_config) >= 0) {
+        fprintf(stderr, "Loaded config file from %s.\n",
+                g_config_filename.c_str());
       } else {
         fprintf(stderr, "Config file not loaded: %s\n", g_error_info_str);
       }
@@ -408,11 +409,9 @@ void handle_args(int argc, char **argv, server_config_t *server_config) {
 }
 
 void validate_server_config_or_die(server_config_t* server_config) {
-  char validation_output_buffer[1024 * 1024];
-  if (validate_server_config(server_config, validation_output_buffer,
-                             sizeof(validation_output_buffer)) != 0) {
-    die("ERROR: Configuration failed validation:\n%s",
-        validation_output_buffer);
+  std::string validation_output;
+  if (validate_server_config(server_config, &validation_output) != 0) {
+    die("ERROR: Configuration failed validation:\n%s", validation_output.c_str());
   }
 }
 
@@ -428,12 +427,12 @@ int main(int argc, char **argv) {
   // Save the config file if specified
   // TODO(gsasha): it looks that if config name is given, it is read and
   // then immediately written back. Seriously?
-  if (strlen(g_config_filename) > 0) {
-    if (write_config_file(g_config_filename, server_config) >= 0) {
-      fprintf(stderr, "Config file written to %s\n", g_config_filename);
+  if (g_config_filename.size() > 0) {
+    if (write_config_file(g_config_filename.c_str(), server_config) >= 0) {
+      fprintf(stderr, "Config file written to %s\n", g_config_filename.c_str());
     } else {
       fprintf(stderr, "Failed to write to config file %s: %s\n",
-              g_config_filename, g_error_info_str);
+              g_config_filename.c_str(), g_error_info_str);
     }
   }
 

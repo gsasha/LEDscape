@@ -5,7 +5,7 @@
 
 // Error Handling
 
-typedef enum {
+enum opc_error_code_t {
   OPC_SERVER_ERR_NONE,
   OPC_SERVER_ERR_NO_JSON,
   OPC_SERVER_ERR_INVALID_JSON,
@@ -13,7 +13,7 @@ typedef enum {
   OPC_SERVER_ERR_FILE_WRITE_FAILED,
   OPC_SERVER_ERR_FILE_TOO_LARGE,
   OPC_SERVER_ERR_SEEK_FAILED
-} opc_error_code_t;
+};
 
 extern __thread opc_error_code_t g_error_code;
 extern __thread char g_error_info_str[4096];

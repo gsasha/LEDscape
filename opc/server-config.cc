@@ -11,6 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "lib/cesanta/frozen.h"
 #include "opc/server-error.h"
 #include "opc/server-pru.h"
@@ -19,8 +23,8 @@
 static const int MAX_CONFIG_FILE_LENGTH_BYTES = 1024 * 1024 * 10;
 
 void init_server_config(server_config_t *config) {
-  *config = (server_config_t){.output_mode_name = "ws281x",
-                              .output_mapping_name = "original-ledscape",
+  *config = (server_config_t){/*.output_mode_name =*/"ws281x",
+                              /*.output_mapping_name =*/"original-ledscape",
 
                               .demo_mode = DEMO_MODE_FADE,
                               .demo_mode_per_strip = {DEMO_MODE_NONE},
@@ -71,7 +75,7 @@ demo_mode_t demo_mode_from_string(const char *str) {
   } else if (strcasecmp(str, "power") == 0) {
     return DEMO_MODE_POWER;
   } else {
-    return -1;
+    return DEMO_MODE_NONE;
   }
 }
 
@@ -106,7 +110,7 @@ int read_config_file(const char *config_filename, server_config_t *out_config) {
 
   // Read the config
   // TODO: Handle character encoding?
-  char *str_data = malloc(file_length + 1);
+  char *str_data = static_cast<char *>(malloc(file_length + 1));
   memcpy(str_data, data, file_length);
   str_data[file_length] = 0;
   server_config_from_json(str_data, strlen(str_data), out_config);
@@ -134,10 +138,9 @@ int write_config_file(const char *config_filename, server_config_t *config) {
   return fclose(fd);
 }
 
-
 int server_config_from_json(const char *json, size_t json_size,
                             server_config_t *output_config) {
-  char* token_value_str;
+  char *token_value_str;
   int token_value_int;
   float token_value_float;
 
@@ -148,16 +151,15 @@ int server_config_from_json(const char *json, size_t json_size,
 
   // Search for parameter "bar" and print it's value
   if (json_scanf(json, json_size, "outputMode:%Q", &token_value_str) > 0) {
-    strlcpy(output_config->output_mode_name, token_value_str,
-            sizeof(output_config->output_mode_name));
-    printf("JSON outputMode %s\n", output_config->output_mode_name);
+    output_config->output_mode_name = token_value_str;
+    printf("JSON outputMode %s\n", output_config->output_mode_name.c_str());
     free(token_value_str);
   }
 
   if (json_scanf(json, json_size, "outputMapping:%Q", &token_value_str) > 0) {
-    strlcpy(output_config->output_mapping_name, token_value_str,
-            sizeof(output_config->output_mapping_name));
-    printf("JSON outputMapping %s\n", output_config->output_mapping_name);
+    output_config->output_mapping_name = token_value_str;
+    printf("JSON outputMapping %s\n",
+           output_config->output_mapping_name.c_str());
     free(token_value_str);
   }
 
@@ -301,7 +303,8 @@ void server_config_to_json(char *dest_string, size_t dest_string_size,
            "\n"
            "}\n",
 
-           input_config->output_mode_name, input_config->output_mapping_name,
+           input_config->output_mode_name.c_str(),
+           input_config->output_mapping_name.c_str(),
 
            demo_mode_to_string(input_config->demo_mode),
 
@@ -321,135 +324,134 @@ void server_config_to_json(char *dest_string, size_t dest_string_size,
            (double)input_config->white_point.blue);
 }
 
-int validate_server_config(server_config_t *input_config,
-                           char *result_json_buffer,
-                           size_t result_json_buffer_size) {
-  strlcpy(result_json_buffer, "{\n\t\"errors\": [", result_json_buffer_size);
-  char path_temp[4096];
+class Validator {
+public:
+  int Validate(const server_config_t *input_config,
+               std::string *diagnostic_str);
 
-  int error_count = 0;
+private:
+  int RenderDiagnostics(std::string *diagnostic_str) {
+    std::ostringstream diagnostic;
+    diagnostic << "{\n";
+    if (diagnostics.size() != 0) {
+      diagnostic << "\t\"errors\": [";
 
-  inline void result_append(const char *format, ...) {
-    snprintf(result_json_buffer + strlen(result_json_buffer),
-             result_json_buffer_size - strlen(result_json_buffer) + 1, format,
-             __builtin_va_arg_pack());
+      for (unsigned int i = 0; i < diagnostics.size(); i++) {
+        if (i < diagnostics.size() - 1) {
+          diagnostic << ",\n";
+        } else {
+          diagnostic << "\n";
+        }
+      }
+      diagnostic << "\t],\n";
+    }
+    // Add closing json
+    diagnostic << "\t\"valid\": " << (diagnostics.empty() ? "true" : "false")
+               << "\n}";
+    *diagnostic_str = diagnostic.str();
+    return diagnostics.size() == 0;
   }
 
-  inline void add_error(const char *format, ...) {
-    // Can't call result_append here because it breaks gcc:
-    // internal compiler error: in initialize_inlined_parameters, at
-    // tree-inline.c:2795
-    snprintf(result_json_buffer + strlen(result_json_buffer),
-             result_json_buffer_size - strlen(result_json_buffer) + 1, format,
-             __builtin_va_arg_pack());
-    error_count++;
-  }
+  void AddError(const std::string &error) { diagnostics.push_back(error); }
 
-  inline void assert_enum_valid(const char *var_name, int value) {
+  void AssertEnumValid(const char *var_name, int value) {
     if (value < 0) {
-      add_error("\n\t\t\""
-                "Invalid %s"
-                "\",",
-                var_name);
+      std::ostringstream os;
+      os << "Invalid " << var_name;
+      diagnostics.push_back(os.str());
     }
   }
 
-  inline void assert_int_range_inclusive(const char *var_name, int min_val,
-                                         int max_val, int value) {
+  inline void AssertIntRangeInclusive(const char *var_name, int min_val,
+                                      int max_val, int value) {
     if (value < min_val || value > max_val) {
-      add_error("\n\t\t\""
-                "Given %s (%d) is outside of range %d-%d (inclusive)"
-                "\",",
-                var_name, value, min_val, max_val);
+      std::ostringstream os;
+      os << "Given " << var_name << " (" << value << ") is outside of range "
+         << min_val << "-" << max_val << " (inclusive)";
+      diagnostics.push_back(os.str());
     }
   }
 
-  inline void assert_double_range_inclusive(
-      const char *var_name, double min_val, double max_val, double value) {
+  inline void AssertDoubleRangeInclusive(const char *var_name, double min_val,
+                                         double max_val, double value) {
     if (value < min_val || value > max_val) {
-      add_error("\n\t\t\""
-                "Given %s (%f) is outside of range %f-%f (inclusive)"
-                "\",",
-                var_name, value, min_val, max_val);
+      std::ostringstream os;
+      os << "Given " << var_name << " (" << value << ") is outside of range "
+         << min_val << "-" << max_val << " (inclusive)";
+      diagnostics.push_back(os.str());
     }
   }
+
+  std::vector<std::string> diagnostics;
+};
+
+int validate_server_config(server_config_t *input_config,
+                           std::string *diagnostic_str) {
+  Validator validator;
+  return validator.Validate(input_config, diagnostic_str);
+}
+
+int Validator::Validate(const server_config_t *input_config,
+                        std::string *diagnostic_str) {
 
   { // outputMode and outputMapping
+    char path_temp[4096];
     for (int pruNum = 0; pruNum < 2; pruNum++) {
-      build_pruN_program_name(input_config->output_mode_name,
-                              input_config->output_mapping_name, pruNum,
+      build_pruN_program_name(input_config->output_mode_name.c_str(),
+                              input_config->output_mapping_name.c_str(), pruNum,
                               path_temp, sizeof(path_temp));
 
       if (access(path_temp, R_OK) == -1) {
-        add_error("\n\t\t\""
-                  "Invalid mapping and/or mode name; cannot access PRU %d "
-                  "program '%s'"
-                  "\",",
-                  pruNum, path_temp);
+        std::ostringstream os;
+        os << "Invalid mapping and/or mode name; cannot access PRU " << pruNum
+           << " program '" << path_temp << "'";
+        AddError(os.str());
       }
     }
   }
 
   // demoMode
-  assert_enum_valid("Demo Mode", input_config->demo_mode);
+  AssertEnumValid("Demo Mode", input_config->demo_mode);
 
   // ledsPerStrip
-  assert_int_range_inclusive("LED Count", 1, 1024,
-                             input_config->leds_per_strip);
+  AssertIntRangeInclusive("LED Count", 1, 1024, input_config->leds_per_strip);
 
   // usedStripCount
-  assert_int_range_inclusive("Strip/Channel Count", 1, 48,
-                             input_config->used_strip_count);
+  AssertIntRangeInclusive("Strip/Channel Count", 1, 48,
+                          input_config->used_strip_count);
 
   // colorChannelOrder
-  assert_enum_valid("Color Channel Order", input_config->color_channel_order);
+  AssertEnumValid("Color Channel Order", input_config->color_channel_order);
 
   // opcTcpPort
-  assert_int_range_inclusive("OPC TCP Port", 1, 65535, input_config->tcp_port);
+  AssertIntRangeInclusive("OPC TCP Port", 1, 65535, input_config->tcp_port);
 
   // opcUdpPort
-  assert_int_range_inclusive("OPC UDP Port", 1, 65535, input_config->udp_port);
+  AssertIntRangeInclusive("OPC UDP Port", 1, 65535, input_config->udp_port);
 
   // e131Port
-  assert_int_range_inclusive("e131 UDP Port", 1, 65535,
-                             input_config->e131_port);
+  AssertIntRangeInclusive("e131 UDP Port", 1, 65535, input_config->e131_port);
 
   // lumCurvePower
-  assert_double_range_inclusive("Luminance Curve Power", 0, 10,
-                                input_config->lum_power);
+  AssertDoubleRangeInclusive("Luminance Curve Power", 0, 10,
+                             input_config->lum_power);
 
   // whitePoint.red
-  assert_double_range_inclusive("Red White Point", 0, 1,
-                                input_config->white_point.red);
+  AssertDoubleRangeInclusive("Red White Point", 0, 1,
+                             input_config->white_point.red);
 
   // whitePoint.green
-  assert_double_range_inclusive("Green White Point", 0, 1,
-                                input_config->white_point.green);
+  AssertDoubleRangeInclusive("Green White Point", 0, 1,
+                             input_config->white_point.green);
 
   // whitePoint.blue
-  assert_double_range_inclusive("Blue White Point", 0, 1,
-                                input_config->white_point.blue);
+  AssertDoubleRangeInclusive("Blue White Point", 0, 1,
+                             input_config->white_point.blue);
 
-  if (error_count > 0) {
-    // Strip off trailing comma
-    result_json_buffer[strlen(result_json_buffer) - 1] = 0;
-    result_append("\n\t],\n");
-  } else {
-    // Reset the output to not include the error messages
-    if (result_json_buffer_size > 0) {
-      result_json_buffer[0] = 0;
-    }
-    result_append("{\n");
-  }
-
-  // Add closing json
-  result_append("\t\"valid\": %s\n", error_count == 0 ? "true" : "false");
-  result_append("}");
-
-  return error_count;
+  return RenderDiagnostics(diagnostic_str);
 }
 
-void print_server_config(FILE* file, server_config_t* server_config) {
+void print_server_config(FILE *file, server_config_t *server_config) {
   char json[4096];
   server_config_to_json(json, sizeof(json), server_config);
   fputs(json, file);

@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-__thread opc_error_code_t g_error_code = 0;
+__thread opc_error_code_t g_error_code = OPC_SERVER_ERR_NONE;
 __thread char g_error_info_str[4096] = {0};
 
 const char *opc_server_strerr(opc_error_code_t error_code) {
@@ -18,6 +18,7 @@ const char *opc_server_strerr(opc_error_code_t error_code) {
     return "Unkown Error";
   }
 }
+
 int opc_server_set_error_av(opc_error_code_t error_code, const char *extra_info,
                             va_list ap) {
   g_error_code = error_code;
@@ -38,8 +39,8 @@ int opc_server_set_error_av(opc_error_code_t error_code, const char *extra_info,
   return -1;
 }
 
-inline int opc_server_set_error(opc_error_code_t error_code,
-                                const char *extra_info, ...) {
+int opc_server_set_error(opc_error_code_t error_code, const char *extra_info,
+                         ...) {
   va_list ap;
   va_start(ap, extra_info);
   int ret = opc_server_set_error(error_code, extra_info, ap);

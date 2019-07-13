@@ -5,6 +5,8 @@
 #include <inttypes.h>
 #include <pthread.h>
 
+#include <string>
+
 #include "ledscape/ledscape.h"
 
 typedef enum {
@@ -16,8 +18,8 @@ typedef enum {
 } demo_mode_t;
 
 typedef struct {
-  char output_mode_name[512];
-  char output_mapping_name[512];
+  std::string output_mode_name;
+  std::string output_mapping_name;
 
   demo_mode_t demo_mode;
   demo_mode_t demo_mode_per_strip[LEDSCAPE_NUM_STRIPS];
@@ -51,8 +53,7 @@ int write_config_file(const char *config_filename, server_config_t *config);
 
 // Config Methods
 int validate_server_config(server_config_t *input_config,
-                           char *result_json_buffer,
-                           size_t result_json_buffer_size);
+                           std::string *diagnostic_str);
 
 int server_config_from_json(const char *json, size_t json_size,
                             server_config_t *output_config);

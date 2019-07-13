@@ -105,20 +105,22 @@ all_pru_templates: $(EXPANDED_PRU_TEMPLATES)
 	$(PASM) -V3 -b $<.i pru/bin/$(notdir $(basename $@))
 	#$(RM) $<.i
 
-%.o: %.cc
-	$(COMPILECC.o)
-
 %.o: %.c
 	$(COMPILE.o)
+
+%.o: %.cc
+	$(COMPILECC.o)
 
 libledscape.a: $(LEDSCAPE_OBJS)
 	$(RM) $@
 	$(COMPILE.a)
 
-$(foreach O,$(TARGETS),$(eval $O: $O.o $(LEDSCAPE_OBJS) $(APP_LOADER_LIB)))
-
-$(TARGETS):
+opc-server: opc-server.o $(LEDSCAPE_OBJS) $(APP_LOADER_LIB)
 	$(COMPILE.link)
+#$(foreach O,$(TARGETS),$(eval $O: $O.o $(LEDSCAPE_OBJS) $(APP_LOADER_LIB)))
+
+#$(TARGETS):
+#	$(COMPILE.link)
 
 ledscape.service: ledscape.service.in
 	sed 's%LEDSCAPE_PATH%'`pwd`'%' ledscape.service.in > ledscape.service
