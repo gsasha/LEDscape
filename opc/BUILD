@@ -16,8 +16,16 @@ cc_library(
   hdrs=["effect.h"],
 )
 
+cc_library(
+  name="driver",
+  hdrs=["driver.h"],
+)
+
 cc_binary(
   name="screen_runner",
   srcs=["screen_runner.cc"],
-  deps=["@fltk//:libfltk"],
+  deps=[
+    "@fltk//:libfltk",
+    ":driver",
+  ],
 )
