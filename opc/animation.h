@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 
+#include "opc/driver.h"
 #include "opc/effect.h"
 #include "opc/rate-data.h"
 #include "opc/render.h"
@@ -21,7 +22,7 @@ public:
 
 class Animation {
 public:
-  Animation(const server_config_t &server_config);
+  Animation(const server_config_t &server_config, Driver* driver);
 
   void Init();
   void StartThread();

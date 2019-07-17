@@ -6,6 +6,7 @@
 #include <sys/time.h>
 
 #include "ledscape/ledscape.h"
+#include "opc/driver.h"
 #include "opc/rate-data.h"
 #include "opc/server-config.h"
 
@@ -18,7 +19,7 @@ typedef struct {
 
 class RenderState {
 public:
-  RenderState(const server_config_t &server_config);
+  RenderState(const server_config_t &server_config, Driver *driver);
 
   void StartThread();
   void JoinThread();
@@ -33,10 +34,12 @@ private:
   void Thread();
   void RenderBackingData();
 
+  const server_config_t& server_config_;
+  Driver* driver_;
+
   int used_strip_count;
   int leds_per_strip;
   int num_leds;
-  color_channel_order_t color_channel_order;
 
   pthread_t thread_handle;
   pthread_mutex_t frame_data_mutex;

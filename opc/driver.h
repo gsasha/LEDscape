@@ -1,6 +1,8 @@
 #ifndef LEDSCAPE_OPC_DRIVER_H
 #define LEDSCAPE_OPC_DRIVER_H
 
+#include <stdint.h>
+
 class Driver {
 public:
   virtual ~Driver() = default;

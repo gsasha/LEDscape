@@ -30,6 +30,7 @@
 #include "lib/cesanta/mongoose.h"
 #include "opc/animation.h"
 #include "opc/color.h"
+#include "opc/ledscape_driver.h"
 #include "opc/server-config.h"
 #include "opc/server-error.h"
 #include "opc/server-pru.h"
@@ -445,7 +446,8 @@ int main(int argc, char **argv) {
                  &g_runtime_state);
 */
 
-  Animation animation(server_config);
+  LedscapeDriver driver(server_config);
+  Animation animation(server_config, &driver);
   animation.StartThread();
   animation.JoinThread();
 /*

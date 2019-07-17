@@ -18,8 +18,8 @@ void *Animation::ThreadFunc(void *animation_ptr) {
   return nullptr;
 }
 
-Animation::Animation(const server_config_t &server_config)
-    : server_config(server_config), render_state_(server_config),
+Animation::Animation(const server_config_t &server_config, Driver *driver)
+    : server_config(server_config), render_state_(server_config, driver),
       rate_data_(60) {}
 
 void Animation::Init() {

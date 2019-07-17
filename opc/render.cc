@@ -7,11 +7,11 @@
 #include "opc/color.h"
 #include "opc/server-pru.h"
 
-RenderState::RenderState(const server_config_t &server_config)
-    : used_strip_count(server_config.used_strip_count),
+RenderState::RenderState(const server_config_t &server_config, Driver *driver)
+    : server_config_(server_config), driver_(driver),
+      used_strip_count(server_config.used_strip_count),
       leds_per_strip(server_config.leds_per_strip),
       num_leds(leds_per_strip * used_strip_count),
-      color_channel_order(server_config.color_channel_order),
       frame_data_mutex(PTHREAD_MUTEX_INITIALIZER), frame_data(nullptr),
       backing_data(nullptr), lut_enabled(server_config.lut_enabled),
       rate_data(5) {
@@ -19,8 +19,6 @@ RenderState::RenderState(const server_config_t &server_config)
   if (lut_enabled) {
     BuildLookupTables(server_config);
   }
-
-  InitLedscape(server_config);
 
   uint32_t led_count = (uint32_t)(leds_per_strip)*LEDSCAPE_NUM_STRIPS;
 
@@ -85,23 +83,6 @@ void RenderState::BuildLookupTables(const server_config_t &server_config) {
                        lut_lookup_blue);
 }
 
-void RenderState::InitLedscape(const server_config_t &server_config) {
-
-  std::string pru0_filename = build_pruN_program_name(
-      server_config.output_mode_name, server_config.output_mapping_name, 0);
-  std::string pru1_filename = build_pruN_program_name(
-      server_config.output_mode_name, server_config.output_mapping_name, 1);
-
-  // Init LEDscape
-  printf("[main] Starting LEDscape... leds_per_strip %d, pru0_program %s, "
-         "pru1_program %s\n",
-         server_config.leds_per_strip, pru0_filename.c_str(),
-         pru1_filename.c_str());
-  leds =
-      ledscape_init_with_programs(server_config.leds_per_strip,
-                                  pru0_filename.c_str(), pru1_filename.c_str());
-}
-
 void RenderState::RenderBackingData() {
   // Apply LUT to the data.
   uint8_t *lut_lookup_r = lut_lookup_red;
@@ -113,13 +94,7 @@ void RenderState::RenderBackingData() {
     pixel->g = lut_lookup_g[pixel->g];
     pixel->b = lut_lookup_b[pixel->b];
   }
-  // Send data to ledscape.
-  ledscape_set_rgba_data(leds, color_channel_order,
-                         reinterpret_cast<uint8_t *>(backing_data), num_leds);
-  ledscape_draw(leds);
-  //  fprintf(stderr, "Sending rgba data to ledscape %d:%d:%d\n",
-  // render_state->backing_data[0].r,
-  // render_state->backing_data[0].g,
-  // render_state->backing_data[0].b);
+
+  driver_->SetPixelData(reinterpret_cast<uint8_t *>(backing_data), num_leds);
 }
 
