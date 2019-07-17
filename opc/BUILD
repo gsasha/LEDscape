@@ -15,3 +15,9 @@ cc_library(
   srcs=["effect.cc"],
   hdrs=["effect.h"],
 )
+
+cc_binary(
+  name="screen_runner",
+  srcs=["screen_runner.cc"],
+  deps=["@fltk//:libfltk"],
+)
