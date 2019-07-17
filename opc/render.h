@@ -29,10 +29,9 @@ public:
 private:
   void BuildLookupTables(const server_config_t &server_config);
   void InitLedscape(const server_config_t &server_config);
+  static void *ThreadFunc(void *render_state);
   void Thread();
   void RenderBackingData();
-
-  static void *ThreadFunc(void *render_state);
 
   int used_strip_count;
   int leds_per_strip;
