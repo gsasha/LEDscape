@@ -18,7 +18,15 @@ cc_library(
 
 cc_library(
   name="driver",
-  hdrs=["driver.h"],
+  srcs = [
+    "fltk-driver.cc",
+  ],
+  hdrs=[
+    "driver.h",
+    "fltk-driver.h",
+  ],
+  deps = [
+  ],
 )
 
 cc_binary(

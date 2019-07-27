@@ -6,6 +6,7 @@
 #include <pthread.h>
 
 #include <string>
+#include <vector>
 
 #include "ledscape/ledscape.h"
 
@@ -22,7 +23,7 @@ struct server_config_t {
   std::string output_mapping_name;
 
   demo_mode_t demo_mode;
-  demo_mode_t demo_mode_per_strip[LEDSCAPE_NUM_STRIPS];
+  std::vector<demo_mode_t> demo_mode_per_strip;
 
   uint16_t tcp_port;
   uint16_t udp_port;
