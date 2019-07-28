@@ -11,21 +11,26 @@ cc_library(
 )
 
 cc_library(
-  name="effect",
-  srcs=["effect.cc"],
-  hdrs=["effect.h"],
-)
-
-cc_library(
   name="driver",
   srcs = [
+    "animation.cc",
+    "driver.cc",
+    "effect.cc",
     "fltk-driver.cc",
+    "render.cc",
   ],
   hdrs=[
+    "animation.h",
     "driver.h",
+    "effect.h",
     "fltk-driver.h",
+    "render.h",
   ],
   deps = [
+    ":rate-data",
+  ],
+  linkopts = [
+    "-pthread",
   ],
 )
 

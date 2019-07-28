@@ -4,11 +4,12 @@
 #include <pthread.h>
 #include <sys/time.h>
 
+#include <vector>
+
 #include "opc/driver.h"
 #include "opc/effect.h"
 #include "opc/rate-data.h"
 #include "opc/render.h"
-#include "opc/server-config.h"
 
 class StripAnimation {
 public:
@@ -22,7 +23,7 @@ public:
 
 class Animation {
 public:
-  Animation(const server_config_t &server_config, Driver* driver);
+  Animation(Driver* driver);
 
   void Init();
   void StartThread();
@@ -32,17 +33,17 @@ private:
   void Thread();
   static void* ThreadFunc(void* animation_ptr);
 
-  const server_config_t &server_config;
-
+  Driver* driver_;
   RenderState render_state_;
 
   pthread_t thread_handle;
 
-  StripAnimation strips_[LEDSCAPE_NUM_STRIPS];
+  std::vector<StripAnimation> strips_;
 
   RateData rate_data_;
 };
 
+/*
 struct animation_state_t;
 typedef struct animation_state_t animation_state_t;
 
@@ -61,6 +62,6 @@ void animation_disable_all(animation_state_t *animation_state, double seconds);
 
 void animation_disable_strip(animation_state_t *animation_state, double seconds,
                              int strip);
-
+*/
 
 #endif // LEDSCAPE_OPC_ANIMATION_H

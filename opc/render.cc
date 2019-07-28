@@ -4,28 +4,27 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "opc/color.h"
-#include "opc/server-pru.h"
+//#include "opc/color.h"
+//#include "opc/server-pru.h"
 
-RenderState::RenderState(const server_config_t &server_config, Driver *driver)
-    : server_config_(server_config), driver_(driver),
-      used_strip_count(server_config.used_strip_count),
-      leds_per_strip(server_config.leds_per_strip),
-      num_leds(leds_per_strip * used_strip_count),
+RenderState::RenderState(Driver *driver)
+    : driver_(driver),
+      num_pixels_(driver->num_strips() * driver->num_pixels_per_strip()),
       frame_data_mutex(PTHREAD_MUTEX_INITIALIZER), frame_data(nullptr),
-      backing_data(nullptr), lut_enabled(server_config.lut_enabled),
+      backing_data(nullptr),
+      // lut_enabled(server_config.lut_enabled),
       rate_data(5) {
 
-  if (lut_enabled) {
-    BuildLookupTables(server_config);
-  }
+  /*
+    if (lut_enabled) {
+      BuildLookupTables(server_config);
+    }
+  */
 
-  uint32_t led_count = (uint32_t)(leds_per_strip)*LEDSCAPE_NUM_STRIPS;
-
-  frame_data =
-      static_cast<buffer_pixel_t *>(malloc(led_count * sizeof(buffer_pixel_t)));
-  backing_data =
-      static_cast<buffer_pixel_t *>(malloc(led_count * sizeof(buffer_pixel_t)));
+  frame_data = static_cast<buffer_pixel_t *>(
+      malloc(num_pixels_ * sizeof(buffer_pixel_t)));
+  backing_data = static_cast<buffer_pixel_t *>(
+      malloc(num_pixels_ * sizeof(buffer_pixel_t)));
 }
 
 void RenderState::StartThread() {
@@ -35,12 +34,12 @@ void RenderState::StartThread() {
 void RenderState::JoinThread() { pthread_join(thread_handle, NULL); }
 
 void RenderState::SetStripData(int strip, buffer_pixel_t *strip_data,
-                               int strip_num_leds) {
-  strip = strip;
-  strip_data = strip_data, strip_num_leds = strip_num_leds;
+                               int strip_num_pixels) {
   pthread_mutex_lock(&frame_data_mutex);
-  buffer_pixel_t *frame_strip_data = frame_data + strip * leds_per_strip;
-  memcpy(frame_strip_data, strip_data, strip_num_leds * sizeof(buffer_pixel_t));
+  buffer_pixel_t *frame_strip_data =
+      frame_data + strip * driver_->num_pixels_per_strip();
+  memcpy(frame_strip_data, strip_data,
+         driver_->num_pixels_per_strip() * sizeof(buffer_pixel_t));
   pthread_mutex_unlock(&frame_data_mutex);
 }
 
@@ -58,8 +57,7 @@ void RenderState::Thread() {
     rate_scheduler.WaitFrame();
 
     pthread_mutex_lock(&frame_data_mutex);
-    memcpy(backing_data, frame_data,
-           used_strip_count * leds_per_strip * sizeof(buffer_pixel_t));
+    memcpy(backing_data, frame_data, num_pixels_ * sizeof(buffer_pixel_t));
     pthread_mutex_unlock(&frame_data_mutex);
 
     RenderBackingData();
@@ -71,7 +69,7 @@ void RenderState::Thread() {
     }
   }
 }
-
+/*
 void RenderState::BuildLookupTables(const server_config_t &server_config) {
   double lum_power = server_config.lum_power;
 
@@ -82,8 +80,10 @@ void RenderState::BuildLookupTables(const server_config_t &server_config) {
   compute_lookup_table(server_config.white_point.blue, lum_power,
                        lut_lookup_blue);
 }
+*/
 
 void RenderState::RenderBackingData() {
+/*
   // Apply LUT to the data.
   uint8_t *lut_lookup_r = lut_lookup_red;
   uint8_t *lut_lookup_g = lut_lookup_green;
@@ -94,7 +94,7 @@ void RenderState::RenderBackingData() {
     pixel->g = lut_lookup_g[pixel->g];
     pixel->b = lut_lookup_b[pixel->b];
   }
-
-  driver_->SetPixelData(reinterpret_cast<uint8_t *>(backing_data), num_leds);
+*/
+driver_->SetPixelData(reinterpret_cast<uint8_t *>(backing_data), num_pixels_);
 }
 

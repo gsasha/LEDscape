@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-#include "ledscape/ledscape.h"
+//#include "ledscape/ledscape.h"
 #include "opc/driver.h"
 #include "opc/rate-data.h"
-#include "opc/server-config.h"
+//#include "opc/server-config.h"
 
 typedef struct {
   uint8_t r;
@@ -19,7 +19,7 @@ typedef struct {
 
 class RenderState {
 public:
-  RenderState(const server_config_t &server_config, Driver *driver);
+  RenderState(Driver *driver);
 
   void StartThread();
   void JoinThread();
@@ -28,30 +28,28 @@ public:
                     int strip_num_pixels);
 
 private:
-  void BuildLookupTables(const server_config_t &server_config);
-  void InitLedscape(const server_config_t &server_config);
+  //void BuildLookupTables(const server_config_t &server_config);
+  //void InitLedscape(const server_config_t &server_config);
   static void *ThreadFunc(void *render_state);
   void Thread();
   void RenderBackingData();
 
-  const server_config_t& server_config_;
+  //const server_config_t& server_config_;
   Driver* driver_;
 
-  int used_strip_count;
-  int leds_per_strip;
-  int num_leds;
+  int num_pixels_;
 
   pthread_t thread_handle;
   pthread_mutex_t frame_data_mutex;
   buffer_pixel_t *frame_data;
   buffer_pixel_t *backing_data;
 
-  ledscape_t *leds;
+  //ledscape_t *leds;
 
-  uint8_t lut_lookup_red[257];
-  uint8_t lut_lookup_green[257];
-  uint8_t lut_lookup_blue[257];
-  bool lut_enabled;
+  //uint8_t lut_lookup_red[257];
+  //uint8_t lut_lookup_green[257];
+  //uint8_t lut_lookup_blue[257];
+  //bool lut_enabled;
 
   RateData rate_data;
 };
