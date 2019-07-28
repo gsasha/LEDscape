@@ -36,8 +36,10 @@ void FltkDriver::PixelRenderer::SetPixelData(uint8_t *rgba_data,
                                              int num_pixels) {
 
   memcpy(pixel_data_, rgba_data, num_pixels * 4);
+  Fl::lock();
   parent()->redraw();
   Fl::flush();
+  Fl::unlock();
   Fl::awake();
 }
 
