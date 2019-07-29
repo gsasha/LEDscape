@@ -1,5 +1,6 @@
 #include "opc/effect.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 
@@ -36,5 +37,153 @@ void BreatheEffect::RenderFrame() {
       up_ = true;
     }
   }
-  //fprintf(stderr, "Render breathe %d\n", luminance_+100);
+}
+
+WalkEffect::WalkEffect(buffer_pixel_t *pixels, int num_pixels, int offset)
+    : Effect(pixels, num_pixels), offset_(offset), position_(offset) {}
+
+void WalkEffect::RenderFrame() {
+  memset(pixels_, 0, num_pixels_ * sizeof(buffer_pixel_t));
+  *(uint32_t*) &pixels_[position_] = 0xffffffff;
+  position_ += 77 + offset_;
+  position_ %= num_pixels_;
+}
+
+void HSV_to_RGB(double h, double s, double v, double *r, double *g, double *b) {
+  double c = v * s;
+  double x = c * (1.0 - fabs(fmod(h / 60.0, 2) - 1.0));
+  double m = v - c;
+  if (h >= 0.0 && h < 60.0) {
+    *r = c + m;
+    *g = x + m;
+    *b = m;
+  } else if (h >= 60.0 && h < 120.0) {
+    *r = x + m;
+    *g = c + m;
+    *b = m;
+  } else if (h >= 120.0 && h < 180.0) {
+    *r = m;
+    *g = c + m;
+    *b = x + m;
+  } else if (h >= 180.0 && h < 240.0) {
+    *r = m;
+    *g = x + m;
+    *b = c + m;
+  } else if (h >= 240.0 && h < 300.0) {
+    *r = x + m;
+    *g = m;
+    *b = c + m;
+  } else if (h >= 300.0 && h < 360.0) {
+    *r = c + m;
+    *g = m;
+    *b = x + m;
+  } else {
+    *r = m;
+    *g = m;
+    *b = m;
+  }
+}
+
+ColorFadeEffect::ColorFadeEffect(buffer_pixel_t *pixels, int num_pixels,
+                                 double offset, double delta)
+    : Effect(pixels, num_pixels), delta_(delta), H_(offset) {}
+
+void ColorFadeEffect::RenderFrame() {
+  double r, g, b;
+  HSV_to_RGB(H_, S_, V_, &r, &g, &b);
+  H_ += delta_;
+  if (H_ >= 360) {
+    H_ = 0;
+  }
+
+  buffer_pixel_t color;
+  color.r = r * 250;
+  color.g = g * 250;
+  color.b = b * 250;
+  uint32_t color_int = *(uint32_t *)&color;
+  for (int i = 0; i < num_pixels_; i++) {
+    *(uint32_t *)&pixels_[i] = color_int;
+  }
+}
+
+MatrixEffect::MatrixEffect(buffer_pixel_t *pixels, int num_pixels,
+                           int num_drops, bool forward)
+    : Effect(pixels, num_pixels), num_drops_(num_drops), forward_(forward),
+      drops_(num_drops_, 0.0), speeds_(num_drops_, 0.0),
+      trail_lengths_(num_drops_, 0.0) {
+  for (int i = 0; i < num_drops_; i++) {
+    CreateDrop(i);
+  }
+}
+
+void MatrixEffect::RenderFrame() {
+  UpdateDrops();
+  RenderDrops();
+}
+
+void MatrixEffect::CreateDrop(int i) {
+  if (forward_) {
+    drops_[i] = (rand() % num_pixels_) / 4.0;
+  } else {
+    drops_[i] = num_pixels_ - (rand() % num_pixels_) / 4.0;
+  }
+  speeds_[i] = exp(-(rand() % 100 / 50.0));
+  trail_lengths_[i] = (rand() % num_pixels_) / 10. + 1;
+}
+
+void MatrixEffect::UpdateDrops() {
+  if (forward_) {
+    for (int i = 0; i < num_drops_; ++i) {
+      drops_[i] += speeds_[i];
+      if (drops_[i] - trail_lengths_[i] > num_pixels_) {
+        CreateDrop(i);
+      }
+    }
+  } else {
+    for (int i = 0; i < num_drops_; ++i) {
+      drops_[i] -= speeds_[i];
+      if (drops_[i] + trail_lengths_[i] < 0) {
+        CreateDrop(i);
+      }
+    }
+  }
+}
+
+void MatrixEffect::RenderDrops() {
+  memset(pixels_, 0, num_pixels_ * sizeof(buffer_pixel_t));
+  if (forward_) {
+    for (int i = 0; i < num_drops_; i++) {
+      buffer_pixel_t color = color_;
+      buffer_pixel_t color_diff = color_;
+      color_diff.r /= trail_lengths_[i];
+      color_diff.g /= trail_lengths_[i];
+      color_diff.b /= trail_lengths_[i];
+      int stop = drops_[i] - trail_lengths_[i];
+      for (int p = drops_[i]; p > stop; p--) {
+        color.r -= color_diff.r;
+        color.g -= color_diff.g;
+        color.b -= color_diff.b;
+        if (p >= 0 && p < num_pixels_) {
+          pixels_[p] = color;
+        }
+      }
+    }
+  } else {
+    for (int i = 0; i < num_drops_; i++) {
+      buffer_pixel_t color = color_;
+      buffer_pixel_t color_diff = color_;
+      color_diff.r /= trail_lengths_[i];
+      color_diff.g /= trail_lengths_[i];
+      color_diff.b /= trail_lengths_[i];
+      int stop = drops_[i] + trail_lengths_[i];
+      for (int p = drops_[i]; p < stop; p++) {
+        color.r -= color_diff.r;
+        color.g -= color_diff.g;
+        color.b -= color_diff.b;
+        if (p >= 0 && p < num_pixels_) {
+          pixels_[p] = color;
+        }
+      }
+    }
+  }
 }

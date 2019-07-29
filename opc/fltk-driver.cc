@@ -9,7 +9,7 @@
 #include <FL/fl_draw.H>
 
 // Size of a single emulated pixel as shown on the screen.
-constexpr int EMULATED_PIXEL_SIZE = 10;
+constexpr int EMULATED_PIXEL_SIZE = 8;
 
 class FltkDriver::PixelRenderer : public Fl_Box {
 public:
@@ -39,8 +39,8 @@ void FltkDriver::PixelRenderer::SetPixelData(uint8_t *rgba_data,
   Fl::lock();
   parent()->redraw();
   Fl::flush();
-  Fl::unlock();
   Fl::awake();
+  Fl::unlock();
 }
 
 void FltkDriver::PixelRenderer::draw() {
