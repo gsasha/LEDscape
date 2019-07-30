@@ -75,11 +75,11 @@ bool RateData::AddEvent() {
     last_window_time = current_time;
     last_window_events = 0;
 
-    fprintf(stderr,
-            "---SSS--- window since start=%lf, seconds_since_window=%lf "
-            "intervals=%d\n",
-            seconds_since_start, seconds_since_last_window,
-            last_window_intervals);
+    //fprintf(stderr,
+    //        "---SSS--- window since start=%lf, seconds_since_window=%lf "
+    //        "intervals=%d\n",
+    //        seconds_since_start, seconds_since_last_window,
+    //        last_window_intervals);
     return true;
   }
   return false;
