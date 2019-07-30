@@ -79,3 +79,19 @@ private:
   std::vector<int> trail_lengths_;
 };
 
+class StarsEffect : public Effect {
+public:
+  StarsEffect(buffer_pixel_t *pixels, int num_pixels, int num_stars);
+  void RenderFrame() override;
+
+private:
+  void CreateStar(int i);
+
+  const int num_stars_;
+  const buffer_pixel_t color_ = {255, 255, 255, 0};
+  std::vector<int> stars_;
+  std::vector<double> luminocities_;
+  std::vector<double> luminocity_limits_;
+  std::vector<double> speeds_;
+  std::vector<int> fading_;
+};

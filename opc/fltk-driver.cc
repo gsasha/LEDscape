@@ -25,10 +25,10 @@ private:
 };
 
 FltkDriver::PixelRenderer::PixelRenderer(int W, int H)
-    : Fl_Box(/* X= */ 0, /* Y= */ 0, W, H, /* L= */ nullptr), width_(W),
-      height_(H) {
-  box(FL_FLAT_BOX);
-  color(FL_DARK2);
+    : Fl_Box(/* X= */ 0, /* Y= */ 0, W * EMULATED_PIXEL_SIZE,
+             H * EMULATED_PIXEL_SIZE, /* L= */ nullptr),
+      width_(W), height_(H) {
+  //box(FL_FLAT_BOX);
   pixel_data_ = new uint8_t[width_ * height_ * 4];
 }
 
@@ -37,7 +37,7 @@ void FltkDriver::PixelRenderer::SetPixelData(uint8_t *rgba_data,
 
   memcpy(pixel_data_, rgba_data, num_pixels * 4);
   Fl::lock();
-  parent()->redraw();
+  redraw();
   Fl::flush();
   Fl::awake();
   Fl::unlock();

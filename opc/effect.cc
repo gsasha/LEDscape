@@ -187,3 +187,43 @@ void MatrixEffect::RenderDrops() {
     }
   }
 }
+
+StarsEffect::StarsEffect(buffer_pixel_t *pixels, int num_pixels, int num_stars)
+    : Effect(pixels, num_pixels), num_stars_(num_stars), stars_(num_stars_),
+      luminocities_(num_stars_), luminocity_limits_(num_stars),
+      speeds_(num_stars_), fading_(num_stars_) {
+  for (int i = 0; i < num_stars_; i++) {
+    CreateStar(i);
+  }
+}
+
+void StarsEffect::CreateStar(int i) {
+  stars_[i] = rand() % num_pixels_;
+  speeds_[i] = exp(3.0-(rand() % 100 / 10.0));
+  luminocity_limits_[i] = speeds_[i]/exp(3.0) * (rand()%50+200);
+  luminocities_[i] = rand() % ((int)(luminocity_limits_[i] / 4 + 1));
+  fading_[i] = false;
+}
+
+void StarsEffect::RenderFrame() {
+  for (int i = 0; i < num_stars_; i++) {
+    if (fading_[i]) {
+      luminocities_[i] -= speeds_[i];
+      if (luminocities_[i] <= 0) {
+        CreateStar(i);
+      }
+    } else {
+      luminocities_[i] += speeds_[i];
+      if (luminocities_[i] >= luminocity_limits_[i]) {
+        fading_[i] = true;
+      }
+    }
+  }
+
+  memset(pixels_, 0, num_pixels_ * sizeof(buffer_pixel_t));
+  for (int i = 0; i < num_stars_; i++) {
+    buffer_pixel_t color;
+    color.r = color.g = color.b = luminocities_[i];
+    pixels_[stars_[i]] = color;
+  }
+}
