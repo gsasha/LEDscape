@@ -35,12 +35,12 @@ FltkDriver::PixelRenderer::PixelRenderer(int W, int H)
 void FltkDriver::PixelRenderer::SetPixelData(uint8_t *rgba_data,
                                              int num_pixels) {
 
-  memcpy(pixel_data_, rgba_data, num_pixels * 4);
   Fl::lock();
+  memcpy(pixel_data_, rgba_data, num_pixels * 4);
   redraw();
   Fl::flush();
-  Fl::awake();
   Fl::unlock();
+  Fl::awake();
 }
 
 void FltkDriver::PixelRenderer::draw() {
