@@ -9,7 +9,7 @@
 #include <FL/fl_draw.H>
 
 // Size of a single emulated pixel as shown on the screen.
-constexpr int EMULATED_PIXEL_SIZE = 8;
+constexpr int EMULATED_PIXEL_SIZE = 16;
 
 class FltkDriver::PixelRenderer : public Fl_Box {
 public:
@@ -35,10 +35,9 @@ FltkDriver::PixelRenderer::PixelRenderer(int W, int H)
 void FltkDriver::PixelRenderer::SetPixelData(uint8_t *rgba_data,
                                              int num_pixels) {
 
-  Fl::lock();
   memcpy(pixel_data_, rgba_data, num_pixels * 4);
+  Fl::lock();
   redraw();
-  Fl::flush();
   Fl::unlock();
   Fl::awake();
 }
@@ -60,6 +59,7 @@ void FltkDriver::PixelRenderer::draw() {
 FltkDriver::FltkDriver(int argc, char *argv[], int num_strips,
                        int num_pixels_per_strip)
     : Driver(num_strips, num_pixels_per_strip) {
+  Fl::lock();  // "start" the FLTK lock mechanism.
   Fl::visual(FL_RGB);
   Fl_Window *window =
       new Fl_Window(num_pixels_per_strip * EMULATED_PIXEL_SIZE,

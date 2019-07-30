@@ -21,10 +21,10 @@ void Animation::Init() {
 
   for (int i = 0; i < driver_->num_strips(); i++) {
     strips_[i].Init(driver_->num_pixels_per_strip());
-    if (i < 14) {
+    if (i < 24) {
       strips_[i].effect = new StarsEffect(
           strips_[i].pixels, driver_->num_pixels_per_strip(), i * 5 + 15);
-    } else if (i < 15) {
+    } else if (i < 25) {
       strips_[i].effect =
           new BreatheEffect(strips_[i].pixels, driver_->num_pixels_per_strip());
     }
