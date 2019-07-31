@@ -23,8 +23,6 @@ struct server_config_t {
 
   color_channel_order_t color_channel_order;
 
-  uint8_t interpolation_enabled;
-  uint8_t dithering_enabled;
   uint8_t lut_enabled;
 
   struct {

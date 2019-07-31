@@ -35,8 +35,6 @@ void init_server_config(server_config_t *config) {
                               .used_strip_count = LEDSCAPE_NUM_STRIPS,
                               .color_channel_order = COLOR_ORDER_BRG,
 
-                              .interpolation_enabled = true,
-                              .dithering_enabled = true,
                               .lut_enabled = true,
 
                               .white_point = {.9, 1, 1},
@@ -155,17 +153,6 @@ int server_config_from_json(const char *json, size_t json_size,
     printf("JSON opcUdpPort %d\n", token_value_int);
   }
 
-  if (json_scanf(json, json_size, "enableInterpolation:%B", &token_value_int) >
-      0) {
-    output_config->interpolation_enabled = token_value_int;
-    printf("JSON enableInterpolation %d\n", token_value_int);
-  }
-
-  if (json_scanf(json, json_size, "enableDithering:%B", &token_value_int) > 0) {
-    output_config->dithering_enabled = token_value_int;
-    printf("JSON enableDithering %d\n", token_value_int);
-  }
-
   if (json_scanf(json, json_size, "enableLookupTable:%B", &token_value_int) >
       0) {
     output_config->lut_enabled = token_value_int;
@@ -229,12 +216,6 @@ void server_config_to_json(char *dest_string, size_t dest_string_size,
            "\n"
 
            "\t"
-           "\"enableInterpolation\": %s,"
-           "\n"
-           "\t"
-           "\"enableDithering\": %s,"
-           "\n"
-           "\t"
            "\"enableLookupTable\": %s,"
            "\n"
 
@@ -267,8 +248,6 @@ void server_config_to_json(char *dest_string, size_t dest_string_size,
 
            input_config->tcp_port, input_config->udp_port,
 
-           input_config->interpolation_enabled ? "true" : "false",
-           input_config->dithering_enabled ? "true" : "false",
            input_config->lut_enabled ? "true" : "false",
 
            (double)input_config->lum_power,

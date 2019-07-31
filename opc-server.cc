@@ -42,7 +42,6 @@
 //  - UDP receiver
 // Config:
 //  - White-balance, curve adjustment
-//  - Respecting interpolation and dithering settings
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -84,8 +83,6 @@ static struct option long_options[] = {
 
     {"demo-mode", required_argument, NULL, 'D'},
 
-    {"no-interpolation", no_argument, NULL, 'i'},
-    {"no-dithering", no_argument, NULL, 't'},
     {"no-lut", no_argument, NULL, 'l'},
 
     {"help", no_argument, NULL, 'h'},
@@ -200,14 +197,6 @@ void handle_args(int argc, char **argv, server_config_t *server_config,
           color_channel_order_from_string(optarg);
     } break;
 
-    case 'i': {
-      server_config->interpolation_enabled = false;
-    } break;
-
-    case 't': {
-      server_config->dithering_enabled = false;
-    } break;
-
     case 'l': {
       server_config->lut_enabled = false;
     } break;
@@ -310,14 +299,6 @@ void handle_args(int argc, char **argv, server_config_t *server_config,
           case 'o':
             printf("Specifies the color channel output order (RGB, RBG, GRB, "
                    "GBR, BGR or BRG); default is BRG.");
-            break;
-          case 'i':
-            printf("Disables interpolation between frames (choppier output but "
-                   "improves performance)");
-            break;
-          case 't':
-            printf("Disables dithering (choppier output but improves "
-                   "performance)");
             break;
           case 'l':
             printf("Disables luminance correction (lower color values appear "
