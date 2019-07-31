@@ -1,6 +1,7 @@
 #include "opc/fltk-driver.h"
 
 #include <iostream>
+#include <vector>
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
@@ -18,17 +19,78 @@ public:
 
   void draw() override;
 
+  void SetPixelLayoutHorizontalRectangle(int pixel_pos_start, int num_pixels,
+                                         int row_size, int x, int y);
+  void SetPixelLayoutVerticalRectangle(int pixel_pos_start, int num_pixels,
+                                       int column_size, int x, int y);
+  void SetPixelLayoutHorizontalZigzag(int pixel_pos_start, int num_pixels,
+                                      int row_size, int x, int y);
+  void SetPixelLayoutVerticalZigzag(int pixel_pos_start, int num_pixels,
+                                    int column_size, int x, int y);
+  void SetPixelLayoutLeftToRight(int pixel_pos_start, int num_pixels, int x,
+                                 int y);
+  void SetPixelLayoutRightToLeft(int pixel_pos_start, int num_pixels, int x,
+                                 int y);
+  void SetPixelLayoutTopToBottom(int pixel_pos_start, int num_pixels, int x,
+                                 int y);
+  void SetPixelLayoutBottomToTop(int pixel_pos_start, int num_pixels, int x,
+                                 int y);
+
 private:
+  struct PixelPosition {
+    PixelPosition(int x, int y) : x(x), y(y) {}
+    int x = 0;
+    int y = 0;
+  };
+
   int width_;
   int height_;
   buffer_pixel_t *pixel_data_;
+  std::vector<PixelPosition> pixel_positions_;
 };
+
+void FltkDriver::PixelRenderer::SetPixelLayoutHorizontalRectangle(
+    int pixel_pos_start, int num_pixels, int row_size, int x, int y) {}
+
+void FltkDriver::PixelRenderer::SetPixelLayoutVerticalRectangle(
+    int pixel_pos_start, int num_pixels, int column_size, int x, int y) {}
+
+void FltkDriver::PixelRenderer::SetPixelLayoutHorizontalZigzag(
+    int pixel_pos_start, int num_pixels, int row_size, int x, int y) {}
+
+void FltkDriver::PixelRenderer::SetPixelLayoutVerticalZigzag(
+    int pixel_pos_start, int num_pixels, int column_size, int x, int y) {}
+
+void FltkDriver::PixelRenderer::SetPixelLayoutLeftToRight(int pixel_pos_start,
+                                                          int num_pixels, int x,
+                                                          int y) {
+  for (int i = 0; i < num_pixels; i++) {
+    pixel_positions_[pixel_pos_start + i] =
+        PixelPosition((x + i) * EMULATED_PIXEL_SIZE, y * EMULATED_PIXEL_SIZE);
+  }
+}
+
+void FltkDriver::PixelRenderer::SetPixelLayoutRightToLeft(int pixel_pos_start,
+                                                          int num_pixels, int x,
+                                                          int y) {
+  for (int i = 0; i < num_pixels; i++) {
+    pixel_positions_[pixel_pos_start + i] = {(x - i) * EMULATED_PIXEL_SIZE,
+                                             y * EMULATED_PIXEL_SIZE};
+  }
+}
+
+void FltkDriver::PixelRenderer::SetPixelLayoutTopToBottom(int pixel_pos_start,
+                                                          int num_pixels, int x,
+                                                          int y) {}
+
+void FltkDriver::PixelRenderer::SetPixelLayoutBottomToTop(int pixel_pos_start,
+                                                          int num_pixels, int x,
+                                                          int y) {}
 
 FltkDriver::PixelRenderer::PixelRenderer(int W, int H)
     : Fl_Box(/* X= */ 0, /* Y= */ 0, W * EMULATED_PIXEL_SIZE,
              H * EMULATED_PIXEL_SIZE, /* L= */ nullptr),
       width_(W), height_(H) {
-  // box(FL_FLAT_BOX);
   pixel_data_ = new buffer_pixel_t[width_ * height_];
 }
 
