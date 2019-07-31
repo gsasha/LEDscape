@@ -51,7 +51,6 @@
 void *udp_server_thread(void *threadarg);
 void *tcp_server_thread(void *threadarg);
 void *e131_server_thread(void *threadarg);
-void *demo_thread(void *threadarg);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global Data
@@ -67,7 +66,6 @@ static struct {
   thread_state_lt tcp_server_thread;
   thread_state_lt udp_server_thread;
   thread_state_lt e131_server_thread;
-  thread_state_lt demo_thread;
 } g_threads;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -450,32 +448,8 @@ int main(int argc, char **argv) {
   Animation animation(&driver);
   animation.StartThread();
   animation.JoinThread();
-/*
-  if (server_config->demo_mode != DEMO_MODE_NONE) {
-    printf("[main] Demo Mode Enabled\n");
-    pthread_create(&g_threads.demo_thread.handle, NULL, demo_thread,
-                   &g_runtime_state);
-  } else {
-    printf("[main] Demo Mode Disabled\n");
-  }
-*/
 
-  fprintf(stderr, "Waiting for demo thread to exit\n");
-  pthread_join(g_threads.demo_thread.handle, NULL);
- 
   pthread_exit(NULL);
-}
-
-inline uint32_t lutInterpolate(uint32_t value, uint32_t *lut) {
-  // Inspired by FadeCandy:
-  // https://github.com/scanlime/fadecandy/blob/master/firmware/fc_pixel_lut.cpp
-
-  uint32_t index = value >> 8;       // Range [0, 0xFF]
-  uint32_t alpha = value & 0xFF;     // Range [0, 0xFF]
-  uint32_t invAlpha = 0x100 - alpha; // Range [1, 0x100]
-
-  // Result in range [0, 0xFFFF]
-  return (lut[index] * invAlpha + lut[index + 1] * alpha) >> 8;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -496,120 +470,6 @@ typedef enum {
 } opc_system_id_t;
 
 typedef enum { OPC_LEDSCAPE_CMD_GET_CONFIG = 1 } opc_ledscape_cmd_id_t;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Demo Data Thread
-//
-
-void *demo_thread(void *runtime_state_ptr) {
-runtime_state_ptr = runtime_state_ptr;
-#if 0
-  runtime_state_t *runtime_state = (runtime_state_t *)runtime_state_ptr;
-  server_config_t *server_config = &runtime_state->server_config;
-  fprintf(stderr, "Starting demo data thread\n");
-
-  buffer_pixel_t *buffer = NULL;
-  uint32_t buffer_size = 0;
-
-//  struct timeval now_tv, delta_tv;
-  uint8_t demo_enabled = true;
-
-  buffer = malloc(server_config->leds_per_strip * sizeof(buffer_pixel_t));
-  memset(buffer, 0, buffer_size);
-
-  for (uint16_t frame_index = 0; /*ever*/; frame_index += 3) {
-    // Calculate time since last remote data
-/*
-    pthread_mutex_lock(&render_state->mutex);
-    gettimeofday(&now_tv, NULL);
-    timersub(&now_tv, &render_state->last_remote_data_tv, &delta_tv);
-    pthread_mutex_unlock(&render_state->mutex);
-
-    uint32_t leds_per_strip = server_config->leds_per_strip;
-    uint32_t channel_count = leds_per_strip * 3 * LEDSCAPE_NUM_STRIPS;
-*/
-    demo_mode_t demo_mode = server_config->demo_mode;
-
-    // Enable/disable demo mode and log
-/*
-    if (delta_tv.tv_sec > 5) {
-      if (!demo_enabled) {
-        printf("[demo] Starting Demo: %s\n", demo_mode_to_string(demo_mode));
-      }
-
-      demo_enabled = true;
-    } else {
-      if (demo_enabled) {
-        printf("[demo] Stopping Demo: %s\n", demo_mode_to_string(demo_mode));
-      }
-
-      demo_enabled = false;
-    }
-*/
-    if (demo_enabled) {
-
-      for (uint32_t strip = 0; strip < LEDSCAPE_NUM_STRIPS;
-           strip++) {
-        for (uint16_t p = 0, pixel_index = 0; p < render_state->leds_per_strip;
-             p++, pixel_index++) {
-          switch (demo_mode) {
-          case DEMO_MODE_NONE: {
-            buffer[pixel_index].r = buffer[pixel_index].g =
-                buffer[pixel_index].b = 0;
-          } break;
-
-          case DEMO_MODE_IDENTIFY: {
-            // Set the pixel to the strip index unless the pixel has the same
-            // index as the strip, then light it up grey with bit value: 1010
-            // 1010
-            buffer[pixel_index].r = buffer[pixel_index].g =
-                buffer[pixel_index].b = (uint8_t)((strip == p) ? 170 : p);
-          } break;
-
-          case DEMO_MODE_FADE: {
-            int baseBrightness = 196;
-            int brightnessChange = 128;
-            uint8_t rgb[3];
-            HSBtoRGB(
-                ((frame_index +
-                  ((p + strip * render_state->leds_per_strip) * 360) /
-                      (render_state->leds_per_strip * 10)) %
-                 360),
-                255,
-                baseBrightness -
-                    (((frame_index / 10) +
-                      (p * brightnessChange) / render_state->leds_per_strip + strip * 10) %
-                     brightnessChange),
-                rgb);
-            buffer[pixel_index].r = rgb[0];
-            buffer[pixel_index].g = rgb[1];
-            buffer[pixel_index].b = rgb[2];
-          } break;
-
-          case DEMO_MODE_BLACK: {
-            buffer[pixel_index].r = buffer[pixel_index].g =
-                buffer[pixel_index].b = 0;
-          } break;
-
-          case DEMO_MODE_POWER: {
-            buffer[pixel_index].r = buffer[pixel_index].g =
-                buffer[pixel_index].b = 0xff;
-          } break;
-          }
-        }
-        set_strip_data(render_state, strip, buffer,
-                       render_state->leds_per_strip);
-      }
-    }
-
-    usleep(1e6 / 30);
-  }
-#pragma clang diagnostic pop
-
-  fprintf(stderr, "Done demo thread\n");
-#endif
-  pthread_exit(NULL);
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // e131 Server
