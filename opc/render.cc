@@ -33,13 +33,12 @@ void RenderState::StartThread() {
 
 void RenderState::JoinThread() { pthread_join(thread_handle, NULL); }
 
-void RenderState::SetStripData(int strip, buffer_pixel_t *strip_data,
-                               int strip_num_pixels) {
+void RenderState::SetStripData(int strip, buffer_pixel_t *pixels,
+                               int num_pixels) {
   pthread_mutex_lock(&frame_data_mutex);
   buffer_pixel_t *frame_strip_data =
       frame_data + strip * driver_->num_pixels_per_strip();
-  memcpy(frame_strip_data, strip_data,
-         driver_->num_pixels_per_strip() * sizeof(buffer_pixel_t));
+  memcpy(frame_strip_data, pixels, num_pixels * sizeof(buffer_pixel_t));
   pthread_mutex_unlock(&frame_data_mutex);
 }
 
@@ -69,32 +68,8 @@ void RenderState::Thread() {
     }
   }
 }
-/*
-void RenderState::BuildLookupTables(const server_config_t &server_config) {
-  double lum_power = server_config.lum_power;
-
-  compute_lookup_table(server_config.white_point.red, lum_power,
-                       lut_lookup_red);
-  compute_lookup_table(server_config.white_point.green, lum_power,
-                       lut_lookup_green);
-  compute_lookup_table(server_config.white_point.blue, lum_power,
-                       lut_lookup_blue);
-}
-*/
 
 void RenderState::RenderBackingData() {
-/*
-  // Apply LUT to the data.
-  uint8_t *lut_lookup_r = lut_lookup_red;
-  uint8_t *lut_lookup_g = lut_lookup_green;
-  uint8_t *lut_lookup_b = lut_lookup_blue;
-  for (int i = 0; i < num_leds; i++) {
-    buffer_pixel_t *pixel = &backing_data[i];
-    pixel->r = lut_lookup_r[pixel->r];
-    pixel->g = lut_lookup_g[pixel->g];
-    pixel->b = lut_lookup_b[pixel->b];
-  }
-*/
-driver_->SetPixelData(reinterpret_cast<uint8_t *>(backing_data), num_pixels_);
+driver_->SetPixelData(backing_data, num_pixels_);
 }
 

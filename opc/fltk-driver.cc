@@ -21,18 +21,18 @@ public:
 private:
   int width_;
   int height_;
-  uint8_t* pixel_data_;
+  uint8_t *pixel_data_;
 };
 
 FltkDriver::PixelRenderer::PixelRenderer(int W, int H)
     : Fl_Box(/* X= */ 0, /* Y= */ 0, W * EMULATED_PIXEL_SIZE,
              H * EMULATED_PIXEL_SIZE, /* L= */ nullptr),
       width_(W), height_(H) {
-  //box(FL_FLAT_BOX);
+  // box(FL_FLAT_BOX);
   pixel_data_ = new uint8_t[width_ * height_ * 4];
 }
 
-void FltkDriver::PixelRenderer::SetPixelData(uint8_t *rgba_data,
+void FltkDriver::PixelRenderer::SetPixelData(buffer_pixel_t *rgba_data,
                                              int num_pixels) {
 
   memcpy(pixel_data_, rgba_data, num_pixels * 4);
@@ -43,15 +43,13 @@ void FltkDriver::PixelRenderer::SetPixelData(uint8_t *rgba_data,
 }
 
 void FltkDriver::PixelRenderer::draw() {
-  uint8_t* pixel = pixel_data_;
+  buffer_pixel_t *pixel = pixel_data_;
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      uchar r = pixel[0];
-      uchar g = pixel[1];
-      uchar b = pixel[2];
       fl_rectf(x * EMULATED_PIXEL_SIZE, y * EMULATED_PIXEL_SIZE,
-               EMULATED_PIXEL_SIZE, EMULATED_PIXEL_SIZE, r, g, b);
-      pixel += 4;
+               EMULATED_PIXEL_SIZE, EMULATED_PIXEL_SIZE, pixel->r, pixel->g,
+               pixel->b);
+      pixel++;
     }
   }
 }
@@ -59,21 +57,18 @@ void FltkDriver::PixelRenderer::draw() {
 FltkDriver::FltkDriver(int argc, char *argv[], int num_strips,
                        int num_pixels_per_strip)
     : Driver(num_strips, num_pixels_per_strip) {
-  Fl::lock();  // "start" the FLTK lock mechanism.
+  Fl::lock(); // "start" the FLTK lock mechanism.
   Fl::visual(FL_RGB);
-  Fl_Window *window =
-      new Fl_Window(num_pixels_per_strip * EMULATED_PIXEL_SIZE,
-                    num_strips * EMULATED_PIXEL_SIZE);
+  Fl_Window *window = new Fl_Window(num_pixels_per_strip * EMULATED_PIXEL_SIZE,
+                                    num_strips * EMULATED_PIXEL_SIZE);
   renderer_ = new PixelRenderer(num_pixels_per_strip, num_strips);
   window->end();
   window->show(argc, argv);
 }
 
-void FltkDriver::SetPixelData(uint8_t *rgba_data, int num_pixels) {
-  renderer_->SetPixelData(rgba_data, num_pixels);
+void FltkDriver::SetPixelData(buffer_pixel_t *pixels, int num_pixels) {
+  renderer_->SetPixelData(pixels, num_pixels);
 }
 
-void FltkDriver::Run() {
-  Fl::run();
-}
+void FltkDriver::Run() { Fl::run(); }
 

@@ -447,7 +447,7 @@ int main(int argc, char **argv) {
 */
 
   LedscapeDriver driver(server_config);
-  Animation animation(server_config, &driver);
+  Animation animation(&driver);
   animation.StartThread();
   animation.JoinThread();
 /*
