@@ -55,8 +55,4 @@ void LedscapeDriver::SetPixelData(buffer_pixel_t* pixels, int num_pixels) {
   ledscape_set_rgba_data(leds_, server_config_.color_channel_order,
                          (uint8_t *)pixels, num_pixels);
   ledscape_draw(leds_);
-  //  fprintf(stderr, "Sending rgba data to ledscape %d:%d:%d\n",
-  // render_state->backing_data[0].r,
-  // render_state->backing_data[0].g,
-  // render_state->backing_data[0].b);
 }

@@ -24,14 +24,12 @@ private:
 
   Driver* driver_;
 
-  int num_pixels_;
+  const int num_pixels_;
 
-  pthread_t thread_handle;
-  pthread_mutex_t frame_data_mutex;
-  buffer_pixel_t *frame_data;
-  buffer_pixel_t *backing_data;
+  pthread_t thread_handle_;
+  buffer_pixel_t *frame_data_;
 
-  RateData rate_data;
+  RateData rate_data_;
 };
 
 #endif // LEDSCAPE_OPC_RENDER_H

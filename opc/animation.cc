@@ -12,7 +12,7 @@ void StripAnimation::Init(int num_pixels) {
 }
 
 Animation::Animation(Driver *driver)
-    : driver_(driver), render_state_(driver), rate_data_(60) {
+    : driver_(driver), render_state_(driver), rate_data_(10) {
   Init();
 }
 
