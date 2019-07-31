@@ -10,16 +10,12 @@ Effect::Effect(buffer_pixel_t *pixels, int num_pixels)
 BlackEffect::BlackEffect(buffer_pixel_t *pixels, int num_pixels)
     : Effect(pixels, num_pixels) {}
 
-void BlackEffect::RenderFrame() {
-  memset(pixels_, 0, num_pixels_ * 4);
-}
+void BlackEffect::RenderFrame() { memset(pixels_, 0, num_pixels_ * 4); }
 
 WhiteEffect::WhiteEffect(buffer_pixel_t *pixels, int num_pixels)
     : Effect(pixels, num_pixels) {}
 
-void WhiteEffect::RenderFrame() {
-  memset(pixels_, 0xff, num_pixels_ * 4);
-}
+void WhiteEffect::RenderFrame() { memset(pixels_, 0xff, num_pixels_ * 4); }
 
 BreatheEffect::BreatheEffect(buffer_pixel_t *pixels, int num_pixels)
     : Effect(pixels, num_pixels) {}
@@ -27,12 +23,12 @@ BreatheEffect::BreatheEffect(buffer_pixel_t *pixels, int num_pixels)
 void BreatheEffect::RenderFrame() {
   memset(pixels_, luminance_, num_pixels_ * sizeof(buffer_pixel_t));
   if (up_) {
-    luminance_+= 1;
+    luminance_ += 1;
     if (luminance_ == 250) {
       up_ = false;
     }
   } else {
-    luminance_-=1;
+    luminance_ -= 1;
     if (luminance_ == 0) {
       up_ = true;
     }
@@ -44,15 +40,15 @@ WalkEffect::WalkEffect(buffer_pixel_t *pixels, int num_pixels, int offset)
 
 void WalkEffect::RenderFrame() {
   memset(pixels_, 0, num_pixels_ * sizeof(buffer_pixel_t));
-  *(uint32_t*) &pixels_[position_] = 0xffffffff;
+  *(uint32_t *)&pixels_[position_] = 0xffffffff;
   position_ += 77 + offset_;
   position_ %= num_pixels_;
 }
 
-void HSV_to_RGB(double h, double s, double v, double *r, double *g, double *b) {
-  double c = v * s;
-  double x = c * (1.0 - fabs(fmod(h / 60.0, 2) - 1.0));
-  double m = v - c;
+void HSV_to_RGB(float h, float s, float v, float *r, float *g, float *b) {
+  float c = v * s;
+  float x = c * (1.0 - fabs(fmod(h / 60.0, 2) - 1.0));
+  float m = v - c;
   if (h >= 0.0 && h < 60.0) {
     *r = c + m;
     *g = x + m;
@@ -85,11 +81,11 @@ void HSV_to_RGB(double h, double s, double v, double *r, double *g, double *b) {
 }
 
 ColorFadeEffect::ColorFadeEffect(buffer_pixel_t *pixels, int num_pixels,
-                                 double offset, double delta)
+                                 float offset, float delta)
     : Effect(pixels, num_pixels), delta_(delta), H_(offset) {}
 
 void ColorFadeEffect::RenderFrame() {
-  double r, g, b;
+  float r, g, b;
   HSV_to_RGB(H_, S_, V_, &r, &g, &b);
   H_ += delta_;
   if (H_ >= 360) {
@@ -199,8 +195,8 @@ StarsEffect::StarsEffect(buffer_pixel_t *pixels, int num_pixels, int num_stars)
 
 void StarsEffect::CreateStar(int i) {
   stars_[i] = rand() % num_pixels_;
-  speeds_[i] = exp(3.0-(rand() % 100 / 10.0));
-  luminocity_limits_[i] = speeds_[i]/exp(3.0) * (rand()%50+200);
+  speeds_[i] = exp(3.0 - (rand() % 100 / 10.0));
+  luminocity_limits_[i] = speeds_[i] / exp(3.0) * (rand() % 50 + 200);
   luminocities_[i] = rand() % ((int)(luminocity_limits_[i] / 4 + 1));
   fading_[i] = false;
 }

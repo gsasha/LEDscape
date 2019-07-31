@@ -48,16 +48,16 @@ private:
 
 class ColorFadeEffect : public Effect {
 public:
-  ColorFadeEffect(buffer_pixel_t *pixels, int num_pixels, double offset,
-                  double delta);
+  ColorFadeEffect(buffer_pixel_t *pixels, int num_pixels, float offset,
+                  float delta);
   void RenderFrame() override;
 
 private:
-  const double delta_;
+  const float delta_;
 
-  double H_;
-  double S_ = 1.0;
-  double V_ = 1.0;
+  float H_;
+  float S_ = 1.0;
+  float V_ = 1.0;
 };
 
 class MatrixEffect : public Effect {
@@ -74,8 +74,8 @@ private:
   const int num_drops_;
   const int forward_;
   const buffer_pixel_t color_ = {0, 250, 0, 0};
-  std::vector<double> drops_;
-  std::vector<double> speeds_;
+  std::vector<float> drops_;
+  std::vector<float> speeds_;
   std::vector<int> trail_lengths_;
 };
 
@@ -90,8 +90,8 @@ private:
   const int num_stars_;
   const buffer_pixel_t color_ = {255, 255, 255, 0};
   std::vector<int> stars_;
-  std::vector<double> luminocities_;
-  std::vector<double> luminocity_limits_;
-  std::vector<double> speeds_;
+  std::vector<float> luminocities_;
+  std::vector<float> luminocity_limits_;
+  std::vector<float> speeds_;
   std::vector<int> fading_;
 };
