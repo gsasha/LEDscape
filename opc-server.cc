@@ -195,10 +195,6 @@ void handle_args(int argc, char **argv, server_config_t *server_config,
       }
     } break;
 
-    case 'D': {
-      server_config->demo_mode = demo_mode_from_string(optarg);
-    } break;
-
     case 'o': {
       server_config->color_channel_order =
           color_channel_order_from_string(optarg);

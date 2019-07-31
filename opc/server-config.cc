@@ -26,9 +26,6 @@ void init_server_config(server_config_t *config) {
   *config = (server_config_t){/*.output_mode_name =*/"ws281x",
                               /*.output_mapping_name =*/"original-ledscape",
 
-                              .demo_mode = DEMO_MODE_FADE,
-                              .demo_mode_per_strip = {DEMO_MODE_NONE},
-
                               .tcp_port = 7890,
                               .udp_port = 7890,
 
@@ -44,39 +41,6 @@ void init_server_config(server_config_t *config) {
 
                               .white_point = {.9, 1, 1},
                               .lum_power = 2};
-}
-
-const char *demo_mode_to_string(demo_mode_t mode) {
-  switch (mode) {
-  case DEMO_MODE_NONE:
-    return "none";
-  case DEMO_MODE_FADE:
-    return "fade";
-  case DEMO_MODE_IDENTIFY:
-    return "id";
-  case DEMO_MODE_BLACK:
-    return "black";
-  case DEMO_MODE_POWER:
-    return "power";
-  default:
-    return "<invalid demo_mode>";
-  }
-}
-
-demo_mode_t demo_mode_from_string(const char *str) {
-  if (strcasecmp(str, "none") == 0) {
-    return DEMO_MODE_NONE;
-  } else if (strcasecmp(str, "id") == 0) {
-    return DEMO_MODE_IDENTIFY;
-  } else if (strcasecmp(str, "fade") == 0) {
-    return DEMO_MODE_FADE;
-  } else if (strcasecmp(str, "black") == 0) {
-    return DEMO_MODE_BLACK;
-  } else if (strcasecmp(str, "power") == 0) {
-    return DEMO_MODE_POWER;
-  } else {
-    return DEMO_MODE_NONE;
-  }
 }
 
 int read_config_file(const char *config_filename, server_config_t *out_config) {
@@ -163,12 +127,6 @@ int server_config_from_json(const char *json, size_t json_size,
     free(token_value_str);
   }
 
-  if (json_scanf(json, json_size, "demoMode:%Q", &token_value_str) > 0) {
-    output_config->demo_mode = demo_mode_from_string(token_value_str);
-    printf("JSON demoMode %s\n", token_value_str);
-    free(token_value_str);
-  }
-
   if (json_scanf(json, json_size, "ledsPerStrip:%d", &token_value_int) > 0) {
     output_config->leds_per_strip = token_value_int;
     printf("JSON ledsPerStrip %d\n", token_value_int);
@@ -252,9 +210,6 @@ void server_config_to_json(char *dest_string, size_t dest_string_size,
            "\t"
            "\"outputMapping\": \"%s\","
            "\n"
-           "\t"
-           "\"demoMode\": \"%s\","
-           "\n"
 
            "\t"
            "\"ledsPerStrip\": %d,"
@@ -305,8 +260,6 @@ void server_config_to_json(char *dest_string, size_t dest_string_size,
 
            input_config->output_mode_name.c_str(),
            input_config->output_mapping_name.c_str(),
-
-           demo_mode_to_string(input_config->demo_mode),
 
            input_config->leds_per_strip, input_config->used_strip_count,
 
@@ -408,9 +361,6 @@ int Validator::Validate(const server_config_t *input_config,
       }
     }
   }
-
-  // demoMode
-  AssertEnumValid("Demo Mode", input_config->demo_mode);
 
   // ledsPerStrip
   AssertIntRangeInclusive("LED Count", 1, 1024, input_config->leds_per_strip);
