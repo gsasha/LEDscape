@@ -14,14 +14,14 @@ constexpr int EMULATED_PIXEL_SIZE = 16;
 class FltkDriver::PixelRenderer : public Fl_Box {
 public:
   PixelRenderer(int W, int H);
-  void SetPixelData(uint8_t *rgba_data, int num_pixels);
+  void SetPixelData(buffer_pixel_t *pixels, int num_pixels);
 
   void draw() override;
 
 private:
   int width_;
   int height_;
-  uint8_t *pixel_data_;
+  buffer_pixel_t *pixel_data_;
 };
 
 FltkDriver::PixelRenderer::PixelRenderer(int W, int H)
@@ -29,13 +29,13 @@ FltkDriver::PixelRenderer::PixelRenderer(int W, int H)
              H * EMULATED_PIXEL_SIZE, /* L= */ nullptr),
       width_(W), height_(H) {
   // box(FL_FLAT_BOX);
-  pixel_data_ = new uint8_t[width_ * height_ * 4];
+  pixel_data_ = new buffer_pixel_t[width_ * height_];
 }
 
-void FltkDriver::PixelRenderer::SetPixelData(buffer_pixel_t *rgba_data,
+void FltkDriver::PixelRenderer::SetPixelData(buffer_pixel_t *pixels,
                                              int num_pixels) {
 
-  memcpy(pixel_data_, rgba_data, num_pixels * 4);
+  memcpy(pixel_data_, pixels, num_pixels * 4);
   Fl::lock();
   redraw();
   Fl::unlock();
