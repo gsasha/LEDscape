@@ -9,5 +9,10 @@ cc_library(
     srcs = ["libfltk.so"],
     visibility = ["//visibility:public"],
 )
+cc_library(
+    name = "libyaml-cpp",
+    srcs = ["libyaml-cpp.so"],
+    visibility = ["//visibility:public"],
+)
 """,
 )

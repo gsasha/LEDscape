@@ -23,6 +23,7 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+#include <yaml-cpp/yaml.h>
 
 #include <string>
 

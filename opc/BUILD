@@ -27,6 +27,8 @@ cc_library(
     "render.h",
   ],
   deps = [
+    "@fltk//:libfltk",
+    "@fltk//:libyaml-cpp",
     ":rate-data",
   ],
   linkopts = [
@@ -38,7 +40,6 @@ cc_binary(
   name="screen_runner",
   srcs=["screen_runner.cc"],
   deps=[
-    "@fltk//:libfltk",
     ":driver",
   ],
 )
