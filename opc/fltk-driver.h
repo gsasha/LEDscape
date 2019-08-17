@@ -1,16 +1,19 @@
 #ifndef LEDSCAPE_OPC_FLTK_DRIVER_H
 #define LEDSCAPE_OPC_FLTK_DRIVER_H
 
+#include "yaml-cpp/yaml.h"
 #include "opc/driver.h"
 
 class FltkDriver : public Driver {
 public:
   FltkDriver(int argc, char *argv[], int num_strips, int num_pixels_per_strip);
+  bool LoadLayout(const YAML::Node& layout);
   virtual void SetPixelData(buffer_pixel_t *pixels, int num_pixels) override;
 
   void Run();
 
 private:
+  bool LoadBlockLayout(const YAML::Node& block);
   class PixelRenderer;
 
   PixelRenderer *renderer_;

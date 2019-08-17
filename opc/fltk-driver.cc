@@ -170,10 +170,55 @@ FltkDriver::FltkDriver(int argc, char *argv[], int num_strips,
   Fl_Window *window = new Fl_Window(num_pixels_per_strip * EMULATED_PIXEL_SIZE,
                                     num_strips * EMULATED_PIXEL_SIZE);
   renderer_ = new PixelRenderer(num_pixels_per_strip, num_strips);
-  renderer_->SetPixelLayoutHorizontalZigzag(0, 15*15, 15, 10, 10);
-  renderer_->SetPixelLayoutHorizontalZigzag(num_pixels_per_strip*40, 15*15, 15, 30, 30);
+  //renderer_->SetPixelLayoutHorizontalZigzag(0, 15*15, 15, 10, 10);
+  //renderer_->SetPixelLayoutHorizontalZigzag(num_pixels_per_strip*40, 15*15, 15, 30, 30);
   window->end();
   window->show(argc, argv);
+}
+
+bool FltkDriver::LoadLayout(const YAML::Node &layout) {
+  std::cerr << "--- LOADING BLOCKS IN " <<layout<<"\n";
+  const YAML::Node &blocks = layout["blocks"];
+  std::cerr << "--- GOT BLOCKS\n";
+  if (!blocks.IsSequence()) {
+    std::cerr << "Config does not have well formed blocks sequence.\n";
+    return false;
+  }
+  for (auto it = blocks.begin(); it != blocks.end(); ++it) {
+    std::cout << "Loading block " << *it;
+    const YAML::Node& block = *it;
+    if (!LoadBlockLayout(block)) {
+      std::cerr << "Error loading block " << block;
+      return false;
+    }
+  }
+  return true;
+}
+
+bool FltkDriver::LoadBlockLayout(const YAML::Node& block) {
+  const std::string pattern = block["pattern"].as<std::string>();
+  std::cout << "Loading layout of block " << block["name"] << " with pattern "
+            << block["pattern"] << "\n";
+  if (pattern == "horizontal_rectangle") {
+
+  } else if (pattern == "vertical_rectangle") {
+    renderer_->SetPixelLayoutVerticalRectangle(
+        /* pixel_pos_start= */ block["data_offset"].as<int>(),
+        /* num_pixels= */ block["width"].as<int>() * block["height"].as<int>(),
+        /* row_size= */ block["width"].as<int>(),
+        /* x= */ block["x"].as<int>(),
+        /* y= */ block["y"].as<int>());
+  } else if (pattern == "horizontal_zigzag") {
+  } else if (pattern == "vertical_zigzag") {
+  } else if (pattern == "left_to_right") {
+  } else if (pattern == "right_to_left") {
+  } else if (pattern == "top_to_bottom") {
+  } else if (pattern == "bottim_to_top") {
+  } else {
+    std::cerr << "Unknown pattern " << pattern << "\n";
+    return false;
+  }
+  return true;
 }
 
 void FltkDriver::SetPixelData(buffer_pixel_t *pixels, int num_pixels) {
