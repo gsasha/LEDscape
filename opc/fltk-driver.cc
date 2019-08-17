@@ -1,6 +1,7 @@
 #include "opc/fltk-driver.h"
 
 #include <iostream>
+#include <math.h>
 #include <vector>
 
 #include <FL/Fl.H>
@@ -46,6 +47,9 @@ public:
   bool SetPixelLayoutBottomToTop(int strip, int strip_offset, int num_pixels,
                                  int x, int y, int pixel_width,
                                  int pixel_height);
+  bool SetPixelLayoutLine(int strip, int strip_offset, int num_pixels, int x,
+                          int y, double angle_degrees, int pixel_width,
+                          int pixel_height, double pixel_step);
   bool SetPixelLayout(int strip, int strip_offset, int x, int y,
                       int pixel_width, int pixel_height);
 
@@ -140,13 +144,25 @@ bool FltkDriver::PixelRenderer::SetPixelLayoutVerticalZigzag(
   return true;
 }
 
+bool FltkDriver::PixelRenderer::SetPixelLayoutLine(
+    int strip, int strip_offset, int num_pixels, int x, int y,
+    double angle_degrees, int pixel_width, int pixel_height, double pixel_step) {
+  const double angle_radians = angle_degrees * M_PI / 180;
+  for (int i = 0; i < num_pixels; i++) {
+    double pixel_x = x + cos(angle_radians) * pixel_step * i;
+    double pixel_y = y - sin(angle_radians) * pixel_step * i;
+    if (!SetPixelLayout(strip, strip_offset + i, pixel_x, pixel_y,
+                        pixel_width, pixel_height)) {
+      std::cerr << "Error setting left to right layout pixel=" << i;
+      return false;
+    }
+  }
+  return true;
+}
+
 bool FltkDriver::PixelRenderer::SetPixelLayoutLeftToRight(
     int strip, int strip_offset, int num_pixels, int x, int y, int pixel_width,
     int pixel_height) {
-  std::cout << "--- SetPixelLayoutLeftToRight strip=" << strip
-            << " offset= " << strip_offset << " num_pixels=" << num_pixels
-            << " x=" << x << " y=" << y << " w=" << pixel_width
-            << " h=" << pixel_height << "\n";
   for (int i = 0; i < num_pixels; i++) {
     if (!SetPixelLayout(strip, strip_offset + i, x + i * pixel_width, y,
                         pixel_width, pixel_height)) {
@@ -160,10 +176,6 @@ bool FltkDriver::PixelRenderer::SetPixelLayoutLeftToRight(
 bool FltkDriver::PixelRenderer::SetPixelLayoutRightToLeft(
     int strip, int strip_offset, int num_pixels, int x, int y, int pixel_width,
     int pixel_height) {
-  std::cout << "--- SetPixelLayoutRightToLeft strip=" << strip
-            << " offset= " << strip_offset << " num_pixels=" << num_pixels
-            << " x=" << x << " y=" << y << " w=" << pixel_width
-            << " h=" << pixel_height << "\n";
   for (int i = 0; i < num_pixels; i++) {
     if (!SetPixelLayout(strip, strip_offset + num_pixels - 1 - i,
                         x + i * pixel_width, y, pixel_width, pixel_height)) {
@@ -275,68 +287,129 @@ bool FltkDriver::LoadLayout(const YAML::Node &layout) {
 
 bool FltkDriver::LoadBlockLayout(const YAML::Node& block) {
   const std::string pattern = block["pattern"].as<std::string>();
+  const int strip = block["strip"].as<int>();
+  const int strip_offset = block["strip_offset"].as<int>(0);
+  const int x = block["x"].as<int>();
+  const int y = block["y"].as<int>();
+  const int pixel_width = block["pixel_width"].as<int>();
+  const int pixel_height = block["pixel_height"].as<int>();
   std::cout << "Loading layout of block " << block["name"] << " with pattern "
             << block["pattern"] << "\n";
   if (pattern == "horizontal_rectangle") {
     if (!renderer_->SetPixelLayoutHorizontalRectangle(
-        /* strip= */ block["strip"].as<int>(),
-        /* strip_offset= */ block["strip_offset"].as<int>(),
-        /* num_rows= */ block["rows"].as<int>(),
-        /* num_columns= */ block["columns"].as<int>(),
-        /* x= */ block["x"].as<int>(),
-        /* y= */ block["y"].as<int>(),
-        /* pixel_width= */ block["pixel_width"].as<int>(default_pixel_width_),
-        /* pixel_height= */
-        block["pixel_height"].as<int>(default_pixel_height_))) {
+            /* strip= */ strip,
+            /* strip_offset= */ strip_offset,
+            /* num_rows= */ block["rows"].as<int>(),
+            /* num_columns= */ block["columns"].as<int>(),
+            /* x= */ x,
+            /* y= */ y,
+            /* pixel_width= */ pixel_width,
+            /* pixel_height= */
+            pixel_height)) {
       std::cerr << "Error setting horizontal rectangle layout\n";
       return false;
     }
   } else if (pattern == "vertical_rectangle") {
     if (!renderer_->SetPixelLayoutVerticalRectangle(
-        /* strip= */ block["strip"].as<int>(),
-        /* strip_offset= */ block["strip_offset"].as<int>(),
-        /* num_rows= */ block["rows"].as<int>(),
-        /* num_columns= */ block["columns"].as<int>(),
-        /* x= */ block["x"].as<int>(),
-        /* y= */ block["y"].as<int>(),
-        /* pixel_width= */ block["pixel_width"].as<int>(default_pixel_width_),
-        /* pixel_height= */
-        block["pixel_height"].as<int>(default_pixel_height_))) {
+            /* strip= */ strip,
+            /* strip_offset= */ strip_offset,
+            /* num_rows= */ block["rows"].as<int>(),
+            /* num_columns= */ block["columns"].as<int>(),
+            /* x= */ x,
+            /* y= */ y,
+            /* pixel_width= */ pixel_width,
+            /* pixel_height= */ pixel_height)) {
       std::cerr << "Error setting vertical rectangle layout\n";
       return false;
     }
   } else if (pattern == "horizontal_zigzag") {
     if (!renderer_->SetPixelLayoutHorizontalZigzag(
-        /* strip= */ block["strip"].as<int>(),
-        /* strip_offset= */ block["strip_offset"].as<int>(),
-        /* num_rows= */ block["rows"].as<int>(),
-        /* num_columns= */ block["columns"].as<int>(),
-        /* x= */ block["x"].as<int>(),
-        /* y= */ block["y"].as<int>(),
-        /* pixel_width= */ block["pixel_width"].as<int>(default_pixel_width_),
-        /* pixel_height= */
-        block["pixel_height"].as<int>(default_pixel_height_))) {
+            /* strip= */ strip,
+            /* strip_offset= */ strip_offset,
+            /* num_rows= */ block["rows"].as<int>(),
+            /* num_columns= */ block["columns"].as<int>(),
+            /* x= */ x,
+            /* y= */ y,
+            /* pixel_width= */ pixel_width,
+            /* pixel_height= */ pixel_height)) {
       std::cerr << "Error setting horizontal zigzag layout\n";
       return false;
     }
   } else if (pattern == "vertical_zigzag") {
     if (!renderer_->SetPixelLayoutHorizontalZigzag(
-        /* strip= */ block["strip"].as<int>(),
-        /* strip_offset= */ block["strip_offset"].as<int>(),
-        /* num_rows= */ block["rows"].as<int>(),
-        /* num_columns= */ block["columns"].as<int>(),
-        /* x= */ block["x"].as<int>(),
-        /* y= */ block["y"].as<int>(),
-        /* pixel_width= */ block["pixel_width"].as<int>(default_pixel_width_),
-        /* pixel_height= */
-        block["pixel_height"].as<int>(default_pixel_height_))) {
+            /* strip= */ strip,
+            /* strip_offset= */ strip_offset,
+            /* num_rows= */ block["rows"].as<int>(),
+            /* num_columns= */ block["columns"].as<int>(),
+            /* x= */ x,
+            /* y= */ y,
+            /* pixel_width= */ pixel_width,
+            /* pixel_height= */ pixel_height)) {
       std::cerr << "Error setting vertical zigzag layout\n";
       return false;
     }
   } else if (pattern == "left_to_right") {
+    if (!renderer_->SetPixelLayoutLeftToRight(
+            /* strip= */ strip,
+            /* strip_offset= */ strip_offset,
+            /* num_pixels= */ block["size"].as<int>(),
+            /* x= */ x,
+            /* y= */ y,
+            /* pixel_width= */ pixel_width,
+            /* pixel_height= */ pixel_height)) {
+      std::cerr << "Error setting left to right layout\n";
+      return false;
+    }
   } else if (pattern == "right_to_left") {
+    if (!renderer_->SetPixelLayoutRightToLeft(
+            /* strip= */ strip,
+            /* strip_offset= */ strip_offset,
+            /* num_pixels= */ block["size"].as<int>(),
+            /* x= */ x,
+            /* y= */ y,
+            /* pixel_width= */ pixel_width,
+            /* pixel_height= */ pixel_height)) {
+      std::cerr << "Error setting left to right layout\n";
+      return false;
+    }
   } else if (pattern == "top_to_bottom") {
-  } else if (pattern == "bottim_to_top") {
+    if (!renderer_->SetPixelLayoutTopToBottom(
+            /* strip= */ strip,
+            /* strip_offset= */ strip_offset,
+            /* num_pixels= */ block["size"].as<int>(),
+            /* x= */ x,
+            /* y= */ y,
+            /* pixel_width= */ pixel_width,
+            /* pixel_height= */ pixel_height)) {
+      std::cerr << "Error setting left to right layout\n";
+      return false;
+    }
+  } else if (pattern == "bottom_to_top") {
+    if (!renderer_->SetPixelLayoutBottomToTop(
+            /* strip= */ strip,
+            /* strip_offset= */ strip_offset,
+            /* num_pixels= */ block["size"].as<int>(),
+            /* x= */ x,
+            /* y= */ y,
+            /* pixel_width= */ pixel_width,
+            /* pixel_height= */ pixel_height)) {
+      std::cerr << "Error setting left to right layout\n";
+      return false;
+    }
+  } else if (pattern == "line") {
+    if (!renderer_->SetPixelLayoutLine(
+            /* strip= */ strip,
+            /* strip_offset= */ strip_offset,
+            /* num_pixels= */ block["size"].as<int>(),
+            /* x= */ x,
+            /* y= */ y,
+            /* angle_degrees= */ block["angle"].as<double>(),
+            /* pixel_width= */ pixel_width,
+            /* pixel_height= */ pixel_height,
+            /* pixel_step= */ block["pixel_step"].as<double>())) {
+      std::cerr << "Error setting left to right layout\n";
+      return false;
+    }
   } else {
     std::cerr << "Unknown pattern " << pattern << "\n";
     return false;

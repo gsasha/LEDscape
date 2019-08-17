@@ -1,5 +1,5 @@
-screen_width: 1024
-screen_height: 768
+screen_width: 1920
+screen_height: 1024
 num_strips: 48
 num_pixels_per_strip: 256
 default_pixel_width: 2
@@ -13,14 +13,14 @@ layout:
       strip_offset: 0
       rows: 48
       columns: 256 
-      x: 512
-      y: 672
-      pixel_width: 2
-      pixel_height: 2
+      x: 0
+      y: 976
+      pixel_width: 1
+      pixel_height: 1
    
     - name: "Neo 0"
       pattern: horizontal_zigzag
-      strip: 41
+      strip: 0
       strip_offset: 0
       rows: 15
       columns: 15
@@ -46,7 +46,81 @@ layout:
       strip_offset: 0
       rows: 15
       columns: 15
-      x: 150
-      y: 0
+      x: 0
+      y: 300
       pixel_width: 10
       pixel_height: 10
+
+    - name: "Level 1 Column 0"
+      pattern: line 
+      strip: 40
+      strip_offset: 0
+      size: 120
+      x: 300
+      y: 500
+      angle: -90
+      pixel_width: 10
+      pixel_height: 10
+      pixel_step: 2
+
+    - name: "Level 1 Bar 0"
+      pattern: line 
+      strip: 40
+      strip_offset: 120 
+      size: 120
+      angle: -30 
+      x: 300
+      y: 500
+      pixel_width: 10
+      pixel_height: 10
+      pixel_step: 2
+
+    - name: "Level 1 Column 1"
+      pattern: line
+      strip: 41
+      strip_offset: 0
+      size: 120
+      x: 610
+      y: 680
+      angle: -90
+      pixel_width: 10
+      pixel_height: 10
+      pixel_step: 2
+
+    - name: "Level 1 Bar 1"
+      pattern: line 
+      strip: 41
+      strip_offset: 120 
+      size: 120
+      angle: 10
+      x: 610
+      y: 680
+      pixel_width: 10
+      pixel_height: 10
+      pixel_step: 2
+
+    - name: "Level 1 Column 2"
+      pattern: line
+      strip: 42
+      strip_offset: 0
+      size: 120
+      x: 964
+      y: 617
+      angle: -90
+      pixel_width: 10
+      pixel_height: 10
+      pixel_step: 2
+
+    - name: "Level 1 Bar 2"
+      pattern: line 
+      strip: 42
+      strip_offset: 120 
+      size: 120
+      angle: 40
+      x: 964
+      y: 617
+      pixel_width: 10
+      pixel_height: 10
+      pixel_step: 2
+
+
