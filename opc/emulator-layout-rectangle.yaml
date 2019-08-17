@@ -1,12 +1,17 @@
+screen_width: 1024
+screen_height: 768
 num_strips: 48
 num_pixels_per_strip: 128
+default_pixel_width: 4
+default_pixel_height: 4
 
 layout:
   blocks:
     - name: "All the pixels"
       pattern: "horizontal_rectangle"
-      data_offset: 0
-      width: 128
-      height: 48
+      strip: 0
+      strip_offset: 0
+      rows: 48
+      columns: 128
       x: 0
       y: 0

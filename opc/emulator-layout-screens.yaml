@@ -1,0 +1,52 @@
+screen_width: 1024
+screen_height: 768
+num_strips: 48
+num_pixels_per_strip: 256
+default_pixel_width: 2
+default_pixel_height: 2
+
+layout:
+  blocks:
+    - name: "Unmapped pixels"
+      pattern: "horizontal_rectangle"
+      strip: 0
+      strip_offset: 0
+      rows: 48
+      columns: 256 
+      x: 512
+      y: 672
+      pixel_width: 2
+      pixel_height: 2
+   
+    - name: "Neo 0"
+      pattern: horizontal_zigzag
+      strip: 41
+      strip_offset: 0
+      rows: 15
+      columns: 15
+      x: 0
+      y: 0
+      pixel_width: 10
+      pixel_height: 10
+
+    - name: "Neo 1"
+      pattern: horizontal_zigzag
+      strip: 1
+      strip_offset: 0
+      rows: 15
+      columns: 15
+      x: 0
+      y: 150
+      pixel_width: 10
+      pixel_height: 10
+
+    - name: "Neo 2"
+      pattern: horizontal_zigzag
+      strip: 2
+      strip_offset: 0
+      rows: 15
+      columns: 15
+      x: 150
+      y: 0
+      pixel_width: 10
+      pixel_height: 10
