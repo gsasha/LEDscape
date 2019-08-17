@@ -1,3 +1,7 @@
+# This might be interesting: https://bloggerbust.ca/post/adding-a-dependency-based-on-autotools-to-a-bazel-project/
+
+workspace(name="ledagent")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 new_local_repository(
     name = "fltk",
@@ -9,10 +13,34 @@ cc_library(
     srcs = ["libfltk.so"],
     visibility = ["//visibility:public"],
 )
+""",
+)
+
+new_local_repository(
+  name = "system",
+  path = "/usr/lib/x86_64-linux-gnu",
+  build_file_content = """
 cc_library(
-    name = "libyaml-cpp",
+    name = "libyaml",
     srcs = ["libyaml-cpp.so"],
     visibility = ["//visibility:public"],
 )
 """,
+)
+
+http_archive(
+   name = "rules_foreign_cc",
+   strip_prefix = "rules_foreign_cc-a3593905f73ce19c09d21f9968f1d3f5bc115157",
+   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/a3593905f73ce19c09d21f9968f1d3f5bc115157.zip",
+   sha256 = "6f3484eacc172c90d605e79130f9f01ec827a98b99c499c396eddc597a9c219d"
+)
+
+#instructions for installing this: https://abseil.io/docs/cpp/quickstart.html
+local_repository(
+  # Name of the Abseil repository. This name is defined within Abseil's
+  # WORKSPACE file, in its `workspace()` metadata
+  name = "com_google_absl",
+
+  # NOTE: Bazel paths must be absolute paths. E.g., you can't use ~/Source
+  path = "/home/gsasha/work/beaglebone/third_party/abseil-cpp",
 )

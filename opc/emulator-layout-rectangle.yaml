@@ -1,0 +1,10 @@
+num_strips: 48
+num_pixels_per_strip: 128
+
+layout:
+  - block:
+    name: "All the pixels"
+    pattern: "horizontal_rectangle"
+    offset: 0
+    width: 128
+    height: 128

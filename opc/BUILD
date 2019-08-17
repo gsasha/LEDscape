@@ -28,7 +28,7 @@ cc_library(
   ],
   deps = [
     "@fltk//:libfltk",
-    "@fltk//:libyaml-cpp",
+    "@system//:libyaml",
     ":rate-data",
   ],
   linkopts = [
@@ -40,6 +40,12 @@ cc_binary(
   name="screen_runner",
   srcs=["screen_runner.cc"],
   deps=[
+    "@com_google_absl//absl/flags:flag",
+    "@com_google_absl//absl/flags:parse",
+    "@system//:libyaml",
     ":driver",
+  ],
+  linkopts = [
+    '-lyaml-cpp',
   ],
 )
