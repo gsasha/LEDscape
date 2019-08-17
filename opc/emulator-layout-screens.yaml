@@ -1,7 +1,7 @@
 screen_width: 1920
 screen_height: 1024
 num_strips: 48
-num_pixels_per_strip: 256
+num_pixels_per_strip: 400 
 default_pixel_width: 2
 default_pixel_height: 2
 
@@ -51,76 +51,99 @@ layout:
       pixel_width: 10
       pixel_height: 10
 
-    - name: "Level 1 Column 0"
+    - name: "Level 1 Candle 0 Up"
       pattern: line 
-      strip: 40
-      strip_offset: 0
-      size: 120
+      strip: 3 
+      strip_offset: 0 
+      size: 60
+      angle: 90 
       x: 300
-      y: 500
-      angle: -90
+      y: 700
+      pixel_width: 10
+      pixel_height: 10
+      pixel_step: 2
+
+    - name: "Level 1 Candle 0 Down"
+      pattern: line 
+      strip: 3
+      strip_offset: 60 
+      size: 60
+      angle: -90 
+      x: 310
+      y: 580
       pixel_width: 10
       pixel_height: 10
       pixel_step: 2
 
     - name: "Level 1 Bar 0"
       pattern: line 
-      strip: 40
+      strip: 3
       strip_offset: 120 
       size: 120
       angle: -30 
       x: 300
-      y: 500
+      y: 700
       pixel_width: 10
       pixel_height: 10
       pixel_step: 2
 
-    - name: "Level 1 Column 1"
-      pattern: line
-      strip: 41
-      strip_offset: 0
-      size: 120
-      x: 610
-      y: 680
+    - name: "Level 1 Column 0"
+      pattern: line 
+      strip: 3
+      strip_offset: 240
+      size: 90
+      x: 510
+      y: 820
       angle: -90
+      pixel_width: 10
+      pixel_height: 10
+      pixel_step: 2
+
+    - name: "Level 1 Candle 1 Up"
+      pattern: line 
+      strip: 4
+      strip_offset: 0 
+      size: 60
+      angle: 90 
+      x: 510
+      y: 820
+      pixel_width: 10
+      pixel_height: 10
+      pixel_step: 2
+
+    - name: "Level 1 Candle 1 Down"
+      pattern: line 
+      strip: 4
+      strip_offset: 60 
+      size: 60
+      angle: -90 
+      x: 520
+      y: 700
       pixel_width: 10
       pixel_height: 10
       pixel_step: 2
 
     - name: "Level 1 Bar 1"
       pattern: line 
-      strip: 41
+      strip: 4
       strip_offset: 120 
       size: 120
-      angle: 10
-      x: 610
-      y: 680
+      angle: 5 
+      x: 520
+      y: 820
       pixel_width: 10
       pixel_height: 10
       pixel_step: 2
 
-    - name: "Level 1 Column 2"
-      pattern: line
-      strip: 42
-      strip_offset: 0
-      size: 120
-      x: 964
-      y: 617
+    - name: "Level 1 Column 1"
+      pattern: line 
+      strip: 4
+      strip_offset: 240
+      size: 90
+      x: 760
+      y: 800
       angle: -90
       pixel_width: 10
       pixel_height: 10
       pixel_step: 2
-
-    - name: "Level 1 Bar 2"
-      pattern: line 
-      strip: 42
-      strip_offset: 120 
-      size: 120
-      angle: 40
-      x: 964
-      y: 617
-      pixel_width: 10
-      pixel_height: 10
-      pixel_step: 2
-
 
