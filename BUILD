@@ -11,16 +11,3 @@
 #  ],
 #)
 
-cc_library(name="pru",
-  srcs=[
-    "pru.c",
-    "util.c",
-  ],
-  hdrs = [
-    "pru.h",
-    "util.h",
-  ],
-  deps = [
-    "//am335x/app_loader:prussdrv",
-  ],
-)
