@@ -1,0 +1,23 @@
+# Derived from: https://john-millikin.com/bazel/toolchains
+
+BEAGLEBONE_TOOLCHAIN = "@rules_beaglebone//:beaglebone_toolchain_type"
+
+def _beaglebone_toolchain_info(ctx):
+    return [
+        platform_common.ToolchainInfo(
+            compiler = ctx.attr.compiler,
+            cflags = ctx.attr.cflags,
+        ),
+    ]
+
+beaglebone_toolchain_info = rule(
+    _beaglebone_toolchain_info,
+    attrs = {
+        "_compiler": attr.label(
+            executable = True,
+            default = "//:demo_compiler"
+            cfg = "host",
+        ),
+        "cflags": attr.string_list(),
+    },
+)

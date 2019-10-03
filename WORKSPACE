@@ -44,3 +44,13 @@ local_repository(
   # NOTE: Bazel paths must be absolute paths. E.g., you can't use ~/Source
   path = "/home/gsasha/work/beaglebone/third_party/abseil-cpp",
 )
+
+# from https://github.com/mjbots/rpi_bazel
+load("//tools/workspace:default.bzl", "add_default_repositories")
+
+add_default_repositories()
+
+load("@rpi_bazel//tools/workspace:default.bzl",
+     rpi_bazel_add = "add_default_repositories")
+rpi_bazel_add()
+
