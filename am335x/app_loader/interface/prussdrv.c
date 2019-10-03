@@ -47,7 +47,7 @@
  */
 
 
-#include <prussdrv.h>
+#include "am335x/app_loader/include/prussdrv.h"
 #include "__prussdrv.h"
 #include <stdio.h>
 
