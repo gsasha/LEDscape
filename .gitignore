@@ -8,6 +8,7 @@ pcb/*.b[^r][^d]
 pcb/*.p[^c][^b]
 rgb-test
 am335x/pasm/pasm
+am335x/app_loader/lib
 .*.d
 *~
 *~
@@ -19,3 +20,5 @@ pru/bin
 ledscape.service
 .idea
 *.iml
+/bazel-*
+/_bazelrc_generated
