@@ -1,5 +1,9 @@
 package(default_visibility = ["//visibility:public"])
 
+exports_files([
+  "emulator-layout-rectangle.yaml",
+  "emulator-layout-screens.yaml",
+])
 
 cc_library(
   name="rate-data",

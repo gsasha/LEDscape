@@ -1,5 +1,5 @@
 /**
- *  OPC image packet receiver.
+ *  OPC image packet receiver..
  */
 #include <arpa/inet.h>
 #include <ctype.h>

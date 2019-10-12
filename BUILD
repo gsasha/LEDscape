@@ -11,6 +11,8 @@
 #  ],
 #)
 
+load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
+
 cc_binary(
   name="opc-server",
   srcs=[
@@ -24,4 +26,19 @@ cc_binary(
     "//ledscape:ledscape",
     "//opc:ledscape_driver",
   ],
+  linkstatic=1,
 )
+pkg_tar(
+    name = "deploy",
+    extension = "tar",
+    include_runfiles = True,
+    package_dir = "ledagent",
+    srcs = [
+        ":opc-server",
+    ],
+    files = {
+        "//opc:emulator-layout-rectangle.yaml": "opc/emulator-layout-rectangle.yaml",
+        "//opc:emulator-layout-screens.yaml": "opc/emulator-layout-screens.yaml",
+    },
+)
+
