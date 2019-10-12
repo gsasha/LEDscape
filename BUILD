@@ -22,6 +22,6 @@ cc_binary(
     "@yaml-cpp//:yaml-cpp",
     "@mongoose//:mongoose",
     "//ledscape:ledscape",
-    "//opc:driver",
+    "//opc:ledscape_driver",
   ],
 )

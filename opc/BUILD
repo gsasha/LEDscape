@@ -19,14 +19,12 @@ cc_library(
     "animation.cc",
     "driver.cc",
     "effect.cc",
-    "fltk-driver.cc",
     "render.cc",
   ],
   hdrs=[
     "animation.h",
     "driver.h",
     "effect.h",
-    "fltk-driver.h",
     "render.h",
   ],
   deps = [
@@ -39,6 +37,39 @@ cc_library(
   ],
 )
 
+cc_library(
+  name="fltk_driver",
+  srcs = [
+    "fltk-driver.cc",
+  ],
+  hdrs = [
+    "fltk-driver.h",
+  ],
+  deps = [
+    ":driver",
+  ]
+)
+
+cc_library(
+  name="ledscape_driver",
+  srcs = [
+    "ledscape_driver.cc",
+    "server-config.cc",
+    "server-pru.cc",
+    "color.cc",
+  ],
+  hdrs = [
+    "ledscape_driver.h",
+    "server-config.h",
+    "server-pru.h",
+    "color.h",
+  ],
+  deps = [
+    ":driver",
+    "//ledscape:ledscape",
+  ]
+)
+
 cc_binary(
   name="screen_runner",
   srcs=["screen_runner.cc"],
@@ -46,7 +77,7 @@ cc_binary(
     "@com_google_absl//absl/flags:flag",
     "@com_google_absl//absl/flags:parse",
     "@system//:libyaml",
-    ":driver",
+    ":fltk_driver",
   ],
   linkopts = [
     '-lyaml-cpp',
