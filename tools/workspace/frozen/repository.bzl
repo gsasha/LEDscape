@@ -11,4 +11,5 @@ def cesanta_frozen_repository(name):
         url = url,
         sha256 = sha256,
         strip_prefix = "frozen-{}".format(commit),
+        build_file = Label("//tools/workspace/frozen:package.BUILD"),
     )
