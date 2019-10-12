@@ -1,0 +1,20 @@
+build:pi --crosstool_top=@rpi_bazel//tools/cc_toolchain:toolchain
+test:pi --crosstool_top=@rpi_bazel//tools/cc_toolchain:toolchain
+
+#build --define CLANG=true
+#test --define CLANG=true
+
+build:pi --cpu=armeabihf
+test:pi --cpu=armeabihf
+
+#build --strip=never
+#test --strip=never
+
+build:pi --compiler=clang
+test:pi --compiler=clang
+
+build -c opt
+test -c opt
+
+test --test_output=errors
+
