@@ -27,7 +27,7 @@ cc_library(
     "render.h",
   ],
   deps = [
-    "@fltk//:libfltk",
+    "@system//:libfltk",
     "@system//:libyaml",
     ":rate-data",
   ],
