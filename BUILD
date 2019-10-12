@@ -17,10 +17,9 @@ cc_binary(
     "opc-server.cc",
   ],
   deps = [
-    #"@ffmpeg",
-    #"@yaml-cpp",
     "@yaml-cpp//:yaml-cpp",
-    "@mongoose//:mongoose",
+    "@cesanta_frozen//:frozen",
+    "@cesanta_mongoose//:mongoose",
     "//ledscape:ledscape",
     "//opc:ledscape_driver",
   ],
