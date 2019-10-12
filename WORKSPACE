@@ -49,8 +49,11 @@ local_repository(
 load("//tools/workspace:default.bzl", "add_default_repositories")
 
 add_default_repositories()
-
+print("---sss--- ***************************")
 load("@rpi_bazel//tools/workspace:default.bzl",
      rpi_bazel_add = "add_default_repositories")
 rpi_bazel_add()
 
+#load("@com_github_mjbots_bazel_deps//tools/workspace:default.bzl",
+#     bazel_deps_add = "add_default_repositories")
+#bazel_deps_add()

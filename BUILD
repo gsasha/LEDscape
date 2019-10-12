@@ -11,3 +11,14 @@
 #  ],
 #)
 
+cc_binary(
+  name="opc-server",
+  srcs=[
+    "opc-server.cc",
+  ],
+  deps = [
+    #"@ffmpeg",
+    #"@yaml-cpp",
+    "//ledscape:ledscape",
+  ],
+)

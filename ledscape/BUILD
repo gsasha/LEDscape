@@ -1,5 +1,6 @@
 cc_library(
   name="ledscape",
+  visibility=["//visibility:public"],
   srcs = [
     "ledscape.c",
   ],
