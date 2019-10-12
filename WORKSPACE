@@ -28,28 +28,27 @@ cc_library(
 """,
 )
 
-http_archive(
-   name = "rules_foreign_cc",
-   strip_prefix = "rules_foreign_cc-a3593905f73ce19c09d21f9968f1d3f5bc115157",
-   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/a3593905f73ce19c09d21f9968f1d3f5bc115157.zip",
-   sha256 = "6f3484eacc172c90d605e79130f9f01ec827a98b99c499c396eddc597a9c219d"
-)
+#http_archive(
+#   name = "rules_foreign_cc",
+#   strip_prefix = "rules_foreign_cc-a3593905f73ce19c09d21f9968f1d3f5bc115157",
+#   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/a3593905f73ce19c09d21f9968f1d3f5bc115157.zip",
+#   sha256 = "6f3484eacc172c90d605e79130f9f01ec827a98b99c499c396eddc597a9c219d"
+#)
 
 #instructions for installing this: https://abseil.io/docs/cpp/quickstart.html
-local_repository(
-  # Name of the Abseil repository. This name is defined within Abseil's
-  # WORKSPACE file, in its `workspace()` metadata
-  name = "com_google_absl",
-
-  # NOTE: Bazel paths must be absolute paths. E.g., you can't use ~/Source
-  path = "/home/gsasha/work/beaglebone/third_party/abseil-cpp",
-)
+#local_repository(
+#  # Name of the Abseil repository. This name is defined within Abseil's
+#  # WORKSPACE file, in its `workspace()` metadata
+#  name = "com_google_absl",
+#
+#  # NOTE: Bazel paths must be absolute paths. E.g., you can't use ~/Source
+#  path = "/home/gsasha/work/beaglebone/third_party/abseil-cpp",
+#)
 
 # from https://github.com/mjbots/rpi_bazel
 load("//tools/workspace:default.bzl", "add_default_repositories")
 
 add_default_repositories()
-print("---sss--- ***************************")
 load("@rpi_bazel//tools/workspace:default.bzl",
      rpi_bazel_add = "add_default_repositories")
 rpi_bazel_add()
@@ -57,3 +56,4 @@ rpi_bazel_add()
 #load("@com_github_mjbots_bazel_deps//tools/workspace:default.bzl",
 #     bazel_deps_add = "add_default_repositories")
 #bazel_deps_add()
+
