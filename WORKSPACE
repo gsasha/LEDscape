@@ -27,11 +27,6 @@ cc_library(
 #   sha256 = "6f3484eacc172c90d605e79130f9f01ec827a98b99c499c396eddc597a9c219d"
 #)
 
-http_archive(
-  name = "cesanta",
-  url = "https://github.com/cesanta/mongoose/archive/c41a22195ceabc02ffd0379f0e71d6c3575337aa.zip",
-  strip_prefix="mongoose-c41a22195ceabc02ffd0379f0e71d6c3575337aa")
-
 # from https://github.com/mjbots/rpi_bazel
 load("//tools/workspace:default.bzl", "add_default_repositories")
 

@@ -19,6 +19,9 @@ cc_binary(
   deps = [
     #"@ffmpeg",
     #"@yaml-cpp",
+    "@yaml-cpp//:yaml-cpp",
+    "@mongoose//:mongoose",
     "//ledscape:ledscape",
+    "//opc:driver",
   ],
 )

@@ -28,7 +28,7 @@
 #include <string>
 
 #include "ledscape/ledscape.h"
-#include "lib/cesanta/mongoose.h"
+#include "mongoose.h"
 #include "opc/animation.h"
 #include "opc/color.h"
 #include "opc/ledscape_driver.h"
