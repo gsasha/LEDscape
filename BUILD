@@ -20,6 +20,7 @@ cc_binary(
     "@yaml-cpp//:yaml-cpp",
     "@cesanta_frozen//:frozen",
     "@cesanta_mongoose//:mongoose",
+    "@org_llvm_libcxx//:libcxx",
     "//ledscape:ledscape",
     "//opc:ledscape_driver",
   ],
