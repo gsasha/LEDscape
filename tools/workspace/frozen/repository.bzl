@@ -5,7 +5,7 @@ def cesanta_frozen_repository(name):
     url = "https://github.com/cesanta/frozen/archive/{}.zip".format(commit)
     # Try the following empty sha256 hash first, then replace with whatever
     # bazel says it is looking for once it complains.
-    sha256 = "a2a959a2144f0482b9bd61e67a9897df02234fff6edf82294579a4276f2f4b97"
+    sha256 = "44b0a18c4ceb1d3be4b2c589dcbbbbfb367afdc6ce7eee5e0b17be8abbfa05aa"
     http_archive(
         name = "cesanta_frozen",
         url = url,

@@ -12,9 +12,9 @@ def add_default_repositories(excludes = []):
         bazel_deps_repository(name="bazel_deps")
     if "abseil" not in excludes:
         abseil_repository(name = "com_google_absl")
-    if "frozen" not in excludes:
+    if "cesanta_frozen" not in excludes:
         cesanta_frozen_repository(name = "cesanta_frozen")
-    if "mongoose" not in excludes:
+    if "cesanta_mongoose" not in excludes:
         cesanta_mongoose_repository(name = "cesanta_mongoose")
     if "yaml-cpp" not in excludes:
         yaml_cpp_repository(name = "yaml-cpp")
