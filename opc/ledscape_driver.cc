@@ -28,6 +28,7 @@ void LedscapeDriver::Init() {
   leds_ =
       ledscape_init_with_programs(server_config_.leds_per_strip,
                                   pru0_filename.c_str(), pru1_filename.c_str());
+  printf("LEDscape init done\n");
 }
 
 void LedscapeDriver::BuildLookupTables() {

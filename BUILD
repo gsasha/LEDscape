@@ -47,7 +47,11 @@ cc_binary(
   ],
   linkstatic=1,
 )
-# run with /home/gsasha/bin/bazel build --config=pi :deploy
+# run with:
+# /home/gsasha/bin/bazel build --config=pi :deploy
+# scp bazel-bin/deploy.tar illuminati@192.168.7.2:/home/illuminati
+# Then on the bbb:
+# chmod +w deploy.tar; tar xvf deploy.tar && (cd ledagent; sudo ./opc-server)
 pkg_tar(
     name = "deploy",
     extension = "tar",
