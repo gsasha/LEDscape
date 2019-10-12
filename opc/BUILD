@@ -55,16 +55,19 @@ cc_library(
   srcs = [
     "ledscape_driver.cc",
     "server-config.cc",
+    "server-error.cc",
     "server-pru.cc",
     "color.cc",
   ],
   hdrs = [
     "ledscape_driver.h",
     "server-config.h",
+    "server-error.h",
     "server-pru.h",
     "color.h",
   ],
   deps = [
+    "@cesanta_frozen//:frozen",
     ":driver",
     "//ledscape:ledscape",
   ]

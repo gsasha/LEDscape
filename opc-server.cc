@@ -28,6 +28,7 @@
 #include <string>
 
 #include "ledscape/ledscape.h"
+#include "ledscape/util.h"
 #include "mongoose.h"
 #include "opc/animation.h"
 #include "opc/color.h"
@@ -35,7 +36,6 @@
 #include "opc/server-config.h"
 #include "opc/server-error.h"
 #include "opc/server-pru.h"
-#include "util.h"
 
 // TODO:
 // Server:
@@ -107,7 +107,7 @@ static struct option long_options[] = {
 void set_pru_mode_and_mapping_from_legacy_output_mode_name(
     server_config_t *server_config, const char *input) {
   if (strcasecmp(input, "NOP") == 0) {
-    server_config->output_mode_name == "nop";
+    server_config->output_mode_name = "nop";
     server_config->output_mapping_name = "original-ledscape";
   } else if (strcasecmp(input, "DMX") == 0) {
     server_config->output_mode_name = "dmx";

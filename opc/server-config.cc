@@ -15,10 +15,10 @@
 #include <string>
 #include <vector>
 
-#include "lib/cesanta/frozen.h"
+#include "frozen.h"
+#include "ledscape/util.h"
 #include "opc/server-error.h"
 #include "opc/server-pru.h"
-#include "util.h"
 
 static const int MAX_CONFIG_FILE_LENGTH_BYTES = 1024 * 1024 * 10;
 
