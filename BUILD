@@ -63,5 +63,8 @@ pkg_tar(
 #        "//:pru_bin/ws281x-original-ledscape-pru0.bin": "pru/bin/ws281x-original-ledscape-pru0.bin",
 #        "//:pru_bin/ws281x-original-ledscape-pru1.bin": "pru/bin/ws281x-original-ledscape-pru1.bin",
     },
+    remap_paths = {
+       "ws281x": "pru/bin/ws281x",
+    },
 )
 
