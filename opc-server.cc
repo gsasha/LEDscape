@@ -846,6 +846,7 @@ runtime_state_ptr = runtime_state_ptr;
     mg_mgr_poll(&mgr, 1000);
   }
   mg_mgr_free(&mgr);
+//2
 #endif
   pthread_exit(NULL);
 }

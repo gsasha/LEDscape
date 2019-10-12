@@ -28,8 +28,6 @@ cc_library(
     "render.h",
   ],
   deps = [
-    "@system//:libfltk",
-    "@system//:libyaml",
     ":rate-data",
   ],
   linkopts = [
@@ -46,6 +44,8 @@ cc_library(
     "fltk-driver.h",
   ],
   deps = [
+    "@system//:libfltk",
+    "@system//:libyaml",
     ":driver",
   ]
 )
