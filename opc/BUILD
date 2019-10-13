@@ -49,7 +49,8 @@ cc_library(
   ],
   deps = [
     "@system//:libfltk",
-    "@system//:libyaml",
+    #"@system//:libyaml",
+    "@yaml-cpp//:yaml-cpp",
     ":driver",
   ]
 )
@@ -83,10 +84,11 @@ cc_binary(
   deps=[
     "@com_google_absl//absl/flags:flag",
     "@com_google_absl//absl/flags:parse",
-    "@system//:libyaml",
+    #"@system//:libyaml",
+    "@yaml-cpp//:yaml-cpp",
     ":fltk_driver",
   ],
   linkopts = [
-    '-lyaml-cpp',
+    #'-lyaml-cpp',
   ],
 )
