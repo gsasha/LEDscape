@@ -83,6 +83,14 @@ void ledscape_strip_set_color(ledscape_t *leds, int strip_index,
   }
 }
 
+void ledscape_set_raw_data(ledscape_t *leds, uint8_t *buffer,
+                           size_t buffer_size) {
+  if (buffer_size > leds->num_leds * 4) {
+    buffer_size = leds->num_leds * 4;
+  }
+  memcpy(leds->frame, buffer, buffer_size);
+}
+
 void ledscape_set_rgba_data(ledscape_t *leds,
                             color_channel_order_t color_channel_order,
                             uint8_t *buffer, size_t num_leds) {
@@ -111,7 +119,6 @@ void ledscape_copy_frame_to_pru(ledscape_t *leds) {
       ddr[pixel * LEDSCAPE_NUM_STRIPS + strip_index] = strip[pixel];
     }
   }
-  //for (int i=0; i<200 ;i++) { ddr[i]=0x0000cc;}
 }
 
 /** Initiate the transfer of a frame to the LED strips */
@@ -142,10 +149,6 @@ void ledscape_draw(ledscape_t *const leds) {
 void ledscape_wait(ledscape_t *const leds) {
   while (1) {
     pru_wait_interrupt();
-
-    //fprintf(stderr, "pru0: (%d,%d), pru1: (%d,%d)\n",
-    //        leds->ws281x_0->command, leds->ws281x_0->response,
-    //        leds->ws281x_1->command, leds->ws281x_1->response);
 
     if (leds->ws281x_0->response && leds->ws281x_1->response)
       return;

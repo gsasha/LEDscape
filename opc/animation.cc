@@ -21,22 +21,24 @@ void Animation::Init() {
 
   for (int i = 0; i < driver_->num_strips(); i++) {
     strips_[i].Init(driver_->num_pixels_per_strip());
-    if (i < 24) {
+    if (i < 4) {
+      strips_[i].effect = new ColorIdentifyEffect(
+          strips_[i].pixels, driver_->num_pixels_per_strip());
+    } else if (i < 24) {
       strips_[i].effect = new StarsEffect(
           strips_[i].pixels, driver_->num_pixels_per_strip(), i * 5 + 15);
     } else if (i < 25) {
       strips_[i].effect =
           new BreatheEffect(strips_[i].pixels, driver_->num_pixels_per_strip());
-    }
-    else if (i < 30) {
+    } else if (i < 30) {
       strips_[i].effect = new WalkEffect(
           strips_[i].pixels, driver_->num_pixels_per_strip(), rand() % 100);
-    } else if ( i < 40) {
+    } else if (i < 40) {
       int offset = rand() % 4 + i;
       double step = (rand() % 1000) / 100000.0;
       strips_[i].effect = new ColorFadeEffect(
           strips_[i].pixels, driver_->num_pixels_per_strip(), offset, step);
-    } else  {
+    } else {
       strips_[i].effect = new MatrixEffect(
           strips_[i].pixels, driver_->num_pixels_per_strip(), 5, true);
     }

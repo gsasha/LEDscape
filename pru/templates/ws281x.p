@@ -93,7 +93,8 @@ _LOOP:
 
 l_word_loop:
 	// for bit in 24 to 0
-	MOV r_bit_num, 24
+	//MOV r_bit_num, 24
+	MOV r_bit_num, 32
 
 	l_bit_loop:
 		DECREMENT r_bit_num

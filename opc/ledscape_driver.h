@@ -17,9 +17,13 @@ private:
   const server_config_t& server_config_;
   ledscape_t *leds_ = nullptr;
 
+  uint8_t *buffer_;
+  uint8_t **buffer_strip_starts_;
+
   uint8_t lut_lookup_red_[257];
   uint8_t lut_lookup_green_[257];
   uint8_t lut_lookup_blue_[257];
+
   bool lut_enabled_ = false;
 };
 

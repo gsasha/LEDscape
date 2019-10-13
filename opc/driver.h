@@ -7,7 +7,7 @@ struct buffer_pixel_t {
   uint8_t r;
   uint8_t g;
   uint8_t b;
-  uint8_t unused;
+  uint8_t w;
 } __attribute__((__packed__));
 
 class Driver {

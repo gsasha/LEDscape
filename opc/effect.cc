@@ -17,6 +17,51 @@ WhiteEffect::WhiteEffect(buffer_pixel_t *pixels, int num_pixels)
 
 void WhiteEffect::RenderFrame() { memset(pixels_, 0xff, num_pixels_ * 4); }
 
+ColorIdentifyEffect::ColorIdentifyEffect(buffer_pixel_t *pixels, int num_pixels)
+    : Effect(pixels, num_pixels) {}
+
+void ColorIdentifyEffect::RenderFrame() {
+  memset(pixels_, 0, num_pixels_ * 4);
+  // x red, 1 black, x green, 1 white, x blue, 1 black, x w.
+  int pos = 0;
+  int x = 5;
+  for (int i = 0; i < x; i++, pos++) {
+    pixels_[pos].r = 0xff;
+  }
+  pixels_[pos].r = 0x0;
+  pixels_[pos].g = 0x0;
+  pixels_[pos].b = 0x0;
+  pixels_[pos].w = 0x0;
+  pos++;
+
+  for (int i = 0; i < x; i++, pos++) {
+    pixels_[pos].g = 0xff;
+  }
+  pixels_[pos].r = 0x0;
+  pixels_[pos].g = 0x0;
+  pixels_[pos].b = 0x0;
+  pixels_[pos].w = 0x0;
+  pos++;
+
+  for (int i = 0; i < x; i++, pos++) {
+    pixels_[pos].b = 0xff;
+  }
+  pixels_[pos].r = 0x0;
+  pixels_[pos].g = 0x0;
+  pixels_[pos].b = 0x0;
+  pixels_[pos].w = 0x0;
+  pos++;
+
+  for (int i = 0; i < x; i++, pos++) {
+    pixels_[pos].w = 0xff;
+  }
+  pixels_[pos].r = 0xff;
+  pixels_[pos].g = 0xff;
+  pixels_[pos].b = 0xff;
+  pixels_[pos].w = 0xff;
+  pos++;
+}
+
 BreatheEffect::BreatheEffect(buffer_pixel_t *pixels, int num_pixels)
     : Effect(pixels, num_pixels) {}
 

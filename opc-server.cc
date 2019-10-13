@@ -379,7 +379,7 @@ void handle_args(int argc, char **argv, server_config_t *server_config,
 
 void validate_server_config_or_die(server_config_t* server_config) {
   std::string validation_output;
-  if (validate_server_config(server_config, &validation_output) != 0) {
+  if (!validate_server_config(server_config, &validation_output)) {
     die("ERROR: Configuration failed validation:\n%s", validation_output.c_str());
   }
 }

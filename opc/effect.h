@@ -26,6 +26,12 @@ public:
   void RenderFrame() override;
 };
 
+class ColorIdentifyEffect : public Effect {
+public:
+  ColorIdentifyEffect(buffer_pixel_t* pixels, int num_pixels);
+  void RenderFrame() override;
+};
+
 class BreatheEffect : public Effect {
 public:
   BreatheEffect(buffer_pixel_t *pixels, int num_pixels);
