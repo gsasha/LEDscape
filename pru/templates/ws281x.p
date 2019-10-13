@@ -92,8 +92,10 @@ _LOOP:
 	QBEQ EXIT, r2, #0xFF
 
 l_word_loop:
-	// for bit in 24 to 0
-	//MOV r_bit_num, 24
+        // The driver outside is formatting the data so that all the bytes are
+        // pushed into the strips. Therefore, we iterate over all 32 bits.
+        // This way, each strip individually can be mapped to RGB or RGBW.
+	// for bit in 32 to 0
 	MOV r_bit_num, 32
 
 	l_bit_loop:

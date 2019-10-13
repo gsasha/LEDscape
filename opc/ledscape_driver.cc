@@ -79,9 +79,9 @@ void LedscapeDriver::SetPixelData(buffer_pixel_t* pixels, int num_pixels) {
         buffer_pos[9] = lut_lookup_red_[strip_pixels[i + 3].r];
         buffer_pos[8] = lut_lookup_blue_[strip_pixels[i + 3].b];
       } else {
-        buffer_pos[3] = strip_pixels[i].g;
-        buffer_pos[2] = strip_pixels[i].r;
-        buffer_pos[1] = strip_pixels[i].b;
+        buffer_pos[3] = strip_pixels[i + 0].g;
+        buffer_pos[2] = strip_pixels[i + 0].r;
+        buffer_pos[1] = strip_pixels[i + 0].b;
 
         buffer_pos[0] = strip_pixels[i + 1].g;
         buffer_pos[7] = strip_pixels[i + 1].r;
@@ -100,19 +100,3 @@ void LedscapeDriver::SetPixelData(buffer_pixel_t* pixels, int num_pixels) {
   ledscape_set_raw_data(leds_, buffer_, num_pixels);
   ledscape_draw(leds_);
 }
-/*
-  // Apply LUT to the data.
-  uint8_t *lut_lookup_r = lut_lookup_red_;
-  uint8_t *lut_lookup_g = lut_lookup_green_;
-  uint8_t *lut_lookup_b = lut_lookup_blue_;
-  for (int i = 0; i < num_pixels; i++) {
-    buffer_pixel_t *pixel = &pixels[i];
-    pixel->r = lut_lookup_r[pixel->r];
-    pixel->g = lut_lookup_g[pixel->g];
-    pixel->b = lut_lookup_b[pixel->b];
-  }
-  ledscape_set_rgba_data(leds_, server_config_.color_channel_order,
-                         (uint8_t *)pixels, num_pixels);
-  ledscape_draw(leds_);
-}
-*/
