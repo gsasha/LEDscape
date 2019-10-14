@@ -26,9 +26,9 @@ public:
   void RenderFrame() override;
 };
 
-class ColorIdentifyEffect : public Effect {
+class ColorDiagnosticEffect : public Effect {
 public:
-  ColorIdentifyEffect(buffer_pixel_t* pixels, int num_pixels);
+  ColorDiagnosticEffect(buffer_pixel_t* pixels, int num_pixels);
   void RenderFrame() override;
 };
 

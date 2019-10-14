@@ -17,10 +17,11 @@ WhiteEffect::WhiteEffect(buffer_pixel_t *pixels, int num_pixels)
 
 void WhiteEffect::RenderFrame() { memset(pixels_, 0xff, num_pixels_ * 4); }
 
-ColorIdentifyEffect::ColorIdentifyEffect(buffer_pixel_t *pixels, int num_pixels)
+ColorDiagnosticEffect::ColorDiagnosticEffect(buffer_pixel_t *pixels,
+                                             int num_pixels)
     : Effect(pixels, num_pixels) {}
 
-void ColorIdentifyEffect::RenderFrame() {
+void ColorDiagnosticEffect::RenderFrame() {
   memset(pixels_, 0, num_pixels_ * 4);
   // x red, 1 black, x green, 1 white, x blue, 1 black, x w.
   int pos = 0;
