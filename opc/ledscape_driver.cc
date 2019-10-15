@@ -58,6 +58,13 @@ void LedscapeDriver::SetPixelData(buffer_pixel_t* pixels, int num_pixels) {
     uint8_t* __restrict buffer_pos = buffer_strip_starts_[strip];
     // 4 pixels pack into 3 words.
     // The driver endian-transforms every 4 bytes.
+    for (int i = 0; i < server_config_.leds_per_strip; i++, buffer_pos += 4) {
+        buffer_pos[3] = lut_lookup_green_[strip_pixels[i + 0].g];
+        buffer_pos[2] = lut_lookup_red_[strip_pixels[i + 0].r];
+        buffer_pos[1] = lut_lookup_blue_[strip_pixels[i + 0].b];
+        buffer_pos[0] = lut_lookup_blue_[strip_pixels[i + 0].w];
+    }
+/*
     for (int i = 0; i < server_config_.leds_per_strip;
          i += 4, buffer_pos += 12) {
       // TODO(gsasha): here maybe apply LUT and also maybe add RGBW.
@@ -96,6 +103,7 @@ void LedscapeDriver::SetPixelData(buffer_pixel_t* pixels, int num_pixels) {
         buffer_pos[8] = strip_pixels[i + 3].b;
       }
     }
+*/
   }
   ledscape_set_raw_data(leds_, buffer_, num_pixels);
   ledscape_draw(leds_);
