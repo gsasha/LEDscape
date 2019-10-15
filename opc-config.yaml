@@ -1,0 +1,18 @@
+driver:
+  default_strip:
+    mode: "rgb"
+  strips:
+    - indices: 1 2 3 4 5
+      mode: "rgba"
+    - indices: 6 7 8 9 10
+      mode: "rgb"
+
+animation:
+  default_scenario:
+    effects:
+      - default: true
+        mode: "stars"
+      - strips: 1 2 3 4 5
+        mode: "stars"
+      - strips: 6 7 8 9 10
+        mode: "matrix"
