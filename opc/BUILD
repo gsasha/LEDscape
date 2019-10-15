@@ -32,6 +32,7 @@ cc_library(
     "render.h",
   ],
   deps = [
+    "@yaml-cpp//:yaml-cpp",
     ":rate-data",
   ],
   linkopts = [
@@ -49,7 +50,6 @@ cc_library(
   ],
   deps = [
     "@system//:libfltk",
-    #"@system//:libyaml",
     "@yaml-cpp//:yaml-cpp",
     ":driver",
   ]

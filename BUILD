@@ -38,6 +38,8 @@ cc_binary(
     "opc-server.cc",
   ],
   deps = [
+    "@com_google_absl//absl/flags:flag",
+    "@com_google_absl//absl/flags:parse",
     "@yaml-cpp//:yaml-cpp",
     "@cesanta_frozen//:frozen",
     "@cesanta_mongoose//:mongoose",

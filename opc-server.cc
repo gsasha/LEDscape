@@ -23,10 +23,12 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
-#include <yaml-cpp/yaml.h>
 
+#include <iostream>
 #include <string>
 
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
 #include "ledscape/ledscape.h"
 #include "ledscape/util.h"
 #include "mongoose.h"
@@ -36,6 +38,11 @@
 #include "opc/server-config.h"
 #include "opc/server-error.h"
 #include "opc/server-pru.h"
+#include "yaml-cpp/yaml.h"
+
+ABSL_FLAG(std::string, config, "", "Configuration contents in yaml");
+ABSL_FLAG(std::string, config_file, "",
+          "File containing config in yaml");
 
 // TODO:
 // Server:
@@ -385,6 +392,17 @@ void validate_server_config_or_die(server_config_t* server_config) {
 }
 
 int main(int argc, char **argv) {
+  absl::ParseCommandLine(argc, argv);
+
+  YAML::Node config;
+  if (!absl::GetFlag(FLAGS_config).empty()) {
+    config = YAML::Load(absl::GetFlag(FLAGS_config));
+  } else if (!absl::GetFlag(FLAGS_config_file).empty()) {
+    config = YAML::LoadFile(absl::GetFlag(FLAGS_config_file));
+  } else {
+    std::cerr << "--config not defined\n";
+    return 1;
+  }
 
   server_config_t server_config;
   init_server_config(&server_config);
